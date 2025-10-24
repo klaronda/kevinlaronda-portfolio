@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supabase Storage Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        .success { background: #d4edda; border-color: #c3e6cb; }
+        .error { background: #f8d7da; border-color: #f5c6cb; }
+        .warning { background: #fff3cd; border-color: #ffeaa7; }
+        button { padding: 10px 20px; margin: 10px 0; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        #results { margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Supabase Storage Connection Test</h1>
+    
+    <div class="test-section">
+        <h3>1. Environment Check</h3>
+        <p id="env-status">Checking...</p>
+    </div>
+
+    <div class="test-section">
+        <h3>2. Storage Bucket Test</h3>
+        <button onclick="testBucket()">Test site_assets Bucket</button>
+        <div id="bucket-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>3. Image Upload Test</h3>
+        <input type="file" id="test-file" accept="image/*" />
+        <button onclick="testUpload()">Test Upload</button>
+        <div id="upload-results"></div>
+    </div>
+
+    <script type="module">
+        import { createClient } from 'https://cdn.skypack.dev/@supabase/supabase-js@2';
+
+        // Get environment variables (these should be available in your app)
+        const supabaseUrl = 'https://ncefkmwkjyidchoprhth.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5jZWZrbXdranlpZGNob3ByaHRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ0MjI4NjYsImV4cCI6MjA1MDAwMDg2Nn0.2Q8Q8Q8Q8Q8Q8Q8Q8Q8Q8Q8Q8Q8Q8Q8Q8Q8Q8Q8Q8';
+        
+        const supabase = createClient(supabaseUrl, supabaseKey);
+
+        // Check environment
+        document.getElementById('env-status').innerHTML = `
+            <div class="success">
+                ✅ Supabase URL: ${supabaseUrl}<br>
+                ✅ API Key: Set (${supabaseKey.substring(0, 20)}...)
+            </div>
+        `;
+
+        window.testBucket = async function() {
+            const resultsDiv = document.getElementById('bucket-results');
+            resultsDiv.innerHTML = '<p>Testing...</p>';
+
+            try {
+                // List buckets
+                const { data: buckets, error } = await supabase.storage.listBuckets();
+                
+                if (error) {
+                    resultsDiv.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+                    return;
+                }
+
+                const siteAssetsBucket = buckets.find(bucket => bucket.name === 'site_assets');
+                
+                if (siteAssetsBucket) {
+                    resultsDiv.innerHTML = `
+                        <div class="success">
+                            ✅ site_assets bucket found<br>
+                            Public: ${siteAssetsBucket.public ? 'Yes' : 'No'}<br>
+                            Created: ${new Date(siteAssetsBucket.created_at).toLocaleString()}
+                        </div>
+                    `;
+                } else {
+                    resultsDiv.innerHTML = `
+                        <div class="warning">
+                            ❌ site_assets bucket not found<br>
+                            Available buckets: ${buckets.map(b => b.name).join(', ')}<br><br>
+                            <strong>Create the bucket:</strong><br>
+                            1. Go to Supabase Dashboard → Storage<br>
+                            2. Click "New bucket"<br>
+                            3. Name: site_assets<br>
+                            4. Check "Public bucket"<br>
+                            5. Click "Create"
+                        </div>
+                    `;
+                }
+            } catch (err) {
+                resultsDiv.innerHTML = `<div class="error">❌ Error: ${err.message}</div>`;
+            }
+        };
+
+        window.testUpload = async function() {
+            const fileInput = document.getElementById('test-file');
+            const resultsDiv = document.getElementById('upload-results');
+            
+            if (!fileInput.files[0]) {
+                resultsDiv.innerHTML = '<div class="warning">⚠️ Please select a file first</div>';
+                return;
+            }
+
+            const file = fileInput.files[0];
+            resultsDiv.innerHTML = '<p>Uploading...</p>';
+
+            try {
+                const fileName = `test-${Date.now()}.${file.name.split('.').pop()}`;
+                const filePath = `test-uploads/${fileName}`;
+
+                const { data, error } = await supabase.storage
+                    .from('site_assets')
+                    .upload(filePath, file);
+
+                if (error) {
+                    resultsDiv.innerHTML = `
+                        <div class="error">
+                            ❌ Upload failed: ${error.message}<br><br>
+                            <strong>Common fixes:</strong><br>
+                            • Create the site_assets bucket<br>
+                            • Set up storage policies<br>
+                            • Check file size (max 10MB)
+                        </div>
+                    `;
+                    return;
+                }
+
+                const { data: urlData } = supabase.storage
+                    .from('site_assets')
+                    .getPublicUrl(filePath);
+
+                resultsDiv.innerHTML = `
+                    <div class="success">
+                        ✅ Upload successful!<br>
+                        File: ${fileName}<br>
+                        URL: <a href="${urlData.publicUrl}" target="_blank">${urlData.publicUrl}</a><br><br>
+                        <img src="${urlData.publicUrl}" style="max-width: 200px; height: auto;" />
+                    </div>
+                `;
+
+            } catch (err) {
+                resultsDiv.innerHTML = `<div class="error">❌ Error: ${err.message}</div>`;
+            }
+        };
+
+        // Auto-test bucket on page load
+        testBucket();
+    </script>
+</body>
+</html>
