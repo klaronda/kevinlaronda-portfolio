@@ -55,39 +55,12 @@
       outDir: 'build',
       rollupOptions: {
         output: {
-          manualChunks: (id) => {
-            // Vendor chunks
-            if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
-              return 'vendor-react';
-            }
-            if (id.includes('node_modules/react-router')) {
-              return 'vendor-router';
-            }
-            if (id.includes('node_modules/@supabase')) {
-              return 'vendor-supabase';
-            }
-            if (id.includes('node_modules/lucide-react')) {
-              return 'vendor-icons';
-            }
-            if (id.includes('node_modules/@tiptap')) {
-              return 'vendor-editor';
-            }
-            if (id.includes('node_modules/@radix-ui')) {
-              return 'vendor-ui';
-            }
-            if (id.includes('node_modules/')) {
-              return 'vendor-other';
-            }
-            // Component chunks
-            if (id.includes('components/AdminPage')) {
-              return 'admin';
-            }
-            if (id.includes('components/HomePage')) {
-              return 'home';
-            }
-            if (id.includes('components/ProjectPage') || id.includes('components/VenturePage')) {
-              return 'project';
-            }
+          manualChunks: {
+            vendor: ['react', 'react-dom'],
+            router: ['react-router-dom'],
+            supabase: ['@supabase/supabase-js'],
+            icons: ['lucide-react'],
+            ui: ['@tiptap/react', '@tiptap/starter-kit', '@tiptap/extension-youtube']
           }
         }
       },
