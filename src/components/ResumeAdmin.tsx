@@ -282,6 +282,8 @@ export function ResumeAdmin() {
       }
 
       setIsEditingProfile(false);
+      // Refresh profile data
+      await refetchProfile();
       alert('Profile saved successfully!');
     } catch (error) {
       console.error('Error saving profile:', error);
