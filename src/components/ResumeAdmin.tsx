@@ -123,10 +123,13 @@ export function ResumeAdmin() {
     if (!activeExperience) return;
 
     try {
+      // Prepare data for Supabase (remove frontend-only fields)
+      const { createdAt, updatedAt, start_date, end_date, ...supabaseData } = activeExperience;
+      
       if (showNewExperience) {
         const { data, error } = await supabase
           .from('experience')
-          .insert([activeExperience])
+          .insert([supabaseData])
           .select()
           .single();
 
@@ -134,7 +137,7 @@ export function ResumeAdmin() {
       } else {
         const { error } = await supabase
           .from('experience')
-          .update(activeExperience)
+          .update(supabaseData)
           .eq('id', activeExperience.id);
 
         if (error) throw error;
@@ -191,10 +194,13 @@ export function ResumeAdmin() {
     if (!activeEducation) return;
 
     try {
+      // Prepare data for Supabase (remove frontend-only fields)
+      const { createdAt, updatedAt, ...supabaseData } = activeEducation;
+      
       if (showNewEducation) {
         const { data, error } = await supabase
           .from('education')
-          .insert([activeEducation])
+          .insert([supabaseData])
           .select()
           .single();
 
@@ -202,7 +208,7 @@ export function ResumeAdmin() {
       } else {
         const { error } = await supabase
           .from('education')
-          .update(activeEducation)
+          .update(supabaseData)
           .eq('id', activeEducation.id);
 
         if (error) throw error;
@@ -252,14 +258,15 @@ export function ResumeAdmin() {
 
     try {
       if (activeProfile.id && activeProfile.id !== '') {
-        // Update existing profile
+        // Update existing profile - prepare data for Supabase
+        const { created_at, updated_at, ...profileData } = activeProfile;
         const { data, error } = await supabase
           .from('profile')
           .update({
-            name: activeProfile.name,
-            title: activeProfile.title,
-            bio: activeProfile.bio,
-            photo_url: activeProfile.photo_url,
+            name: profileData.name,
+            title: profileData.title,
+            bio: profileData.bio,
+            photo_url: profileData.photo_url,
             updated_at: new Date().toISOString()
           })
           .eq('id', activeProfile.id)
