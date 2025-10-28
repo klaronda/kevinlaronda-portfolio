@@ -63,6 +63,10 @@ export const createProject = async (project: Omit<Project, 'id' | 'createdAt' | 
 }
 
 export const updateProject = async (id: string, updates: Partial<Project>): Promise<Project | null> => {
+  console.log('updateProject called with id:', id);
+  console.log('updateProject updates:', updates);
+  console.log('updateProject series_id:', updates.series_id);
+  
   const { data, error } = await supabase
     .from('projects')
     .update({ ...updates, updatedAt: new Date().toISOString() })
@@ -75,6 +79,7 @@ export const updateProject = async (id: string, updates: Partial<Project>): Prom
     return null
   }
 
+  console.log('updateProject success, returned data:', data);
   return data
 }
 

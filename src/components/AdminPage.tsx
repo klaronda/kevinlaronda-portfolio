@@ -145,7 +145,10 @@ export function AdminPage() {
         }
       } else {
         // Update existing project
+        console.log('Updating project with data:', activeProject);
+        console.log('Series ID being set to:', activeProject.series_id);
         const updatedProject = await editProject(activeProject.id, activeProject);
+        console.log('Updated project result:', updatedProject);
         if (updatedProject) {
           setActiveProject(updatedProject);
           setIsEditing(false);
@@ -1455,7 +1458,7 @@ export function AdminPage() {
                       disabled={!isEditing || seriesLoading}
                       value={activeProject.series_id || 'none'}
                       onValueChange={(value) => {
-                        const seriesId = value === 'none' ? undefined : value;
+                        const seriesId = value === 'none' ? null : value;
                         setActiveProject({...activeProject, series_id: seriesId});
                       }}
                     >
