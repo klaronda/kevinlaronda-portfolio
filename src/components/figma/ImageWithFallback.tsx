@@ -12,16 +12,22 @@ export function ImageWithFallback(props: React.ImgHTMLAttributes<HTMLImageElemen
 
   const { src, alt, style, className, width, height, fetchPriority, loading, ...rest } = props
 
+  // Convert fetchPriority to fetchpriority for HTML attribute
+  const imgProps = {
+    ...rest,
+    ...(fetchPriority && { fetchpriority: fetchPriority })
+  }
+
   return didError ? (
     <div
       className={`inline-block bg-gray-100 text-center align-middle ${className ?? ''}`}
       style={style}
     >
       <div className="flex items-center justify-center w-full h-full">
-        <img src={ERROR_IMG_SRC} alt="Error loading image" loading={loading || "lazy"} width={width} height={height} fetchPriority={fetchPriority} {...rest} data-original-url={src} />
+        <img src={ERROR_IMG_SRC} alt="Error loading image" loading={loading || "lazy"} width={width} height={height} {...imgProps} data-original-url={src} />
       </div>
     </div>
   ) : (
-    <img src={src} alt={alt} className={className} style={style} loading={loading || "lazy"} width={width} height={height} fetchPriority={fetchPriority} {...rest} onError={handleError} />
+    <img src={src} alt={alt} className={className} style={style} loading={loading || "lazy"} width={width} height={height} {...imgProps} onError={handleError} />
   )
 }

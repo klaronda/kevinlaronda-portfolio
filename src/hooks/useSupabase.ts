@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { supabase, Project, Venture, Resume, Experience, Education, Profile } from '../lib/supabase'
+import { supabase, Project, Venture, Resume, Experience, Education, Profile, Series } from '../lib/supabase'
 import { 
   getProjects, 
   getProject, 
@@ -22,7 +22,14 @@ import {
   updateEducation,
   deleteEducation,
   getProfile,
-  updateProfile
+  updateProfile,
+  getSeries,
+  getSeriesById,
+  getSeriesBySlug,
+  createSeries,
+  updateSeries,
+  deleteSeries,
+  getProjectsBySeries
 } from '../lib/database'
 
 // Projects hooks
@@ -200,6 +207,79 @@ export const useVentures = () => {
     editVenture,
     removeVenture,
     refetch: fetchVentures
+  }
+}
+
+// Series hooks
+export const useSeries = () => {
+  const [series, setSeries] = useState<Series[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    fetchSeries()
+  }, [])
+
+  const fetchSeries = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const data = await getSeries()
+      setSeries(data)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch series')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const addSeries = async (seriesData: Omit<Series, 'id' | 'created_at' | 'updated_at'>) => {
+    try {
+      const newSeries = await createSeries(seriesData)
+      if (newSeries) {
+        setSeries(prev => [newSeries, ...prev])
+      }
+      return newSeries
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create series')
+      return null
+    }
+  }
+
+  const editSeries = async (id: string, updates: Partial<Series>) => {
+    try {
+      const updatedSeries = await updateSeries(id, updates)
+      if (updatedSeries) {
+        setSeries(prev => prev.map(s => s.id === id ? updatedSeries : s))
+      }
+      return updatedSeries
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update series')
+      return null
+    }
+  }
+
+  const removeSeries = async (id: string) => {
+    try {
+      const success = await deleteSeries(id)
+      if (success) {
+        setSeries(prev => prev.filter(s => s.id !== id))
+      }
+      return success
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete series')
+      return false
+    }
+  }
+
+  return {
+    series,
+    loading,
+    error,
+    addSeries,
+    editSeries,
+    removeSeries,
+    refetch: fetchSeries
   }
 }
 
@@ -443,6 +523,7 @@ export const useProfile = () => {
 export const useSupabase = () => {
   const projectsHook = useProjects()
   const venturesHook = useVentures()
+  const seriesHook = useSeries()
   const resumeHook = useResume()
   const experienceHook = useExperience()
   const educationHook = useEducation()
@@ -466,6 +547,15 @@ export const useSupabase = () => {
     editVenture: venturesHook.editVenture,
     removeVenture: venturesHook.removeVenture,
     refetchVentures: venturesHook.refetch,
+    
+    // Series
+    series: seriesHook.series,
+    seriesLoading: seriesHook.loading,
+    seriesError: seriesHook.error,
+    addSeries: seriesHook.addSeries,
+    editSeries: seriesHook.editSeries,
+    removeSeries: seriesHook.removeSeries,
+    refetchSeries: seriesHook.refetch,
     
     // Resume
     resume: resumeHook.resume,
@@ -500,9 +590,9 @@ export const useSupabase = () => {
     refetchProfile: profileHook.refetch,
     
     // Overall loading state
-    loading: projectsHook.loading || venturesHook.loading || resumeHook.loading || 
+    loading: projectsHook.loading || venturesHook.loading || seriesHook.loading || resumeHook.loading || 
              experienceHook.loading || educationHook.loading || profileHook.loading,
-    error: projectsHook.error || venturesHook.error || resumeHook.error || 
+    error: projectsHook.error || venturesHook.error || seriesHook.error || resumeHook.error || 
            experienceHook.error || educationHook.error || profileHook.error
   }
 }

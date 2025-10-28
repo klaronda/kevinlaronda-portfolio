@@ -1,4 +1,4 @@
-import { supabase, Project, Venture, Resume, Experience, Education, Profile } from './supabase'
+import { supabase, Project, Venture, Resume, Experience, Education, Profile, Series } from './supabase'
 
 // Projects
 export const getProjects = async (): Promise<Project[]> => {
@@ -133,7 +133,6 @@ export const getProjectBySlug = async (slug: string): Promise<Project | null> =>
     .from('projects')
     .select('*')
     .eq('url_slug', slug)
-    .eq('is_visible', true)
     .single()
 
   if (error) {
@@ -168,6 +167,21 @@ export const getVenture = async (id: string): Promise<Venture | null> => {
 
   if (error) {
     console.error('Error fetching venture:', error)
+    return null
+  }
+
+  return data
+}
+
+export const getVentureBySlug = async (slug: string): Promise<Venture | null> => {
+  const { data, error } = await supabase
+    .from('ventures')
+    .select('*')
+    .eq('url_slug', slug)
+    .single()
+
+  if (error) {
+    console.error('Error fetching venture by slug:', error)
     return null
   }
 
@@ -428,4 +442,109 @@ export const updateProfile = async (updates: Partial<Profile>): Promise<Profile 
   }
 
   return data
+}
+
+// Series
+export const getSeries = async (): Promise<Series[]> => {
+  const { data, error } = await supabase
+    .from('series')
+    .select('*')
+    .order('sort_order', { ascending: true })
+
+  if (error) {
+    console.error('Error fetching series:', error)
+    return []
+  }
+
+  return data || []
+}
+
+export const getSeriesById = async (id: string): Promise<Series | null> => {
+  const { data, error } = await supabase
+    .from('series')
+    .select('*')
+    .eq('id', id)
+    .single()
+
+  if (error) {
+    console.error('Error fetching series by id:', error)
+    return null
+  }
+
+  return data
+}
+
+export const getSeriesBySlug = async (slug: string): Promise<Series | null> => {
+  const { data, error } = await supabase
+    .from('series')
+    .select('*')
+    .eq('url_slug', slug)
+    .single()
+
+  if (error) {
+    console.error('Error fetching series by slug:', error)
+    return null
+  }
+
+  return data
+}
+
+export const createSeries = async (series: Omit<Series, 'id' | 'created_at' | 'updated_at'>): Promise<Series | null> => {
+  const { data, error } = await supabase
+    .from('series')
+    .insert([series])
+    .select()
+    .single()
+
+  if (error) {
+    console.error('Error creating series:', error)
+    return null
+  }
+
+  return data
+}
+
+export const updateSeries = async (id: string, updates: Partial<Series>): Promise<Series | null> => {
+  const { data, error } = await supabase
+    .from('series')
+    .update({ ...updates, updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .select()
+    .single()
+
+  if (error) {
+    console.error('Error updating series:', error)
+    return null
+  }
+
+  return data
+}
+
+export const deleteSeries = async (id: string): Promise<boolean> => {
+  const { error } = await supabase
+    .from('series')
+    .delete()
+    .eq('id', id)
+
+  if (error) {
+    console.error('Error deleting series:', error)
+    return false
+  }
+
+  return true
+}
+
+export const getProjectsBySeries = async (seriesId: string): Promise<Project[]> => {
+  const { data, error } = await supabase
+    .from('projects')
+    .select('*')
+    .eq('series_id', seriesId)
+    .order('sort_order', { ascending: true })
+
+  if (error) {
+    console.error('Error fetching projects by series:', error)
+    return []
+  }
+
+  return data || []
 }

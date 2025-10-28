@@ -1,4 +1,5 @@
 import React from 'react';
+import ReactMarkdown from 'react-markdown';
 
 // Generate sitemap for SEO purposes
 export const generateSitemap = (projects: any[] = [], ventures: any[] = []) => {
@@ -109,7 +110,17 @@ export function SitemapPage({ projects = [], ventures = [] }: { projects?: any[]
                   >
                     {project.title}
                   </a>
-                  <p className="text-gray-600 text-sm" dangerouslySetInnerHTML={{ __html: project.summary }} />
+                  <div className="text-gray-600 text-sm">
+                    <ReactMarkdown 
+                      components={{
+                        p: ({children}) => <p className="mb-1">{children}</p>,
+                        strong: ({children}) => <strong className="font-semibold">{children}</strong>,
+                        em: ({children}) => <em className="italic">{children}</em>,
+                      }}
+                    >
+                      {project.summary}
+                    </ReactMarkdown>
+                  </div>
                 </div>
               ))}
             </div>

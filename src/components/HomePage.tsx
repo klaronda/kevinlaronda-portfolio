@@ -7,6 +7,7 @@ import { ImageWithFallback } from './figma/ImageWithFallback';
 import { ArrowRight, Users, Target, Lightbulb } from 'lucide-react';
 import { SEO, generateSEO } from './SEO';
 import { useSupabase } from '../hooks/useSupabase';
+import { MarkdownRenderer } from './MarkdownRenderer';
 
 
 const designThinkingBenefits = [
@@ -147,9 +148,9 @@ export function HomePage() {
                           <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-gray-600 group-hover:translate-x-1 transition-all duration-300" />
                         </div>
                         <h3 className="text-xl text-gray-900 mb-3">{project.title}</h3>
-                        <div 
-                          className="text-gray-600 leading-relaxed rich-text-content"
-                          dangerouslySetInnerHTML={{ __html: project.summary }}
+                        <MarkdownRenderer 
+                          content={project.summary}
+                          className="text-gray-600 leading-relaxed"
                         />
                       </div>
                     </Card>

@@ -7,30 +7,37 @@ import { ImageWithFallback } from './figma/ImageWithFallback';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { useSupabase } from '../hooks/useSupabase';
 import { SEO, generateSEO } from './SEO';
-import type { Project } from '../lib/supabase';
+import type { Project, Venture } from '../lib/supabase';
 
 export function VenturePage() {
   const { id } = useParams<{ id: string }>();
-  const { projects } = useSupabase();
-  const [venture, setVenture] = useState<Project | null>(null);
-  const [relatedVentures, setRelatedVentures] = useState<Project[]>([]);
+  const { projects, ventures } = useSupabase();
+  const [venture, setVenture] = useState<Project | Venture | null>(null);
+  const [relatedVentures, setRelatedVentures] = useState<(Project | Venture)[]>([]);
 
   useEffect(() => {
-    if (id && projects.length > 0) {
-      // Find project with Ventures badge type by url_slug
-      const foundVenture = projects.find(p => p.url_slug === id && p.badgeType === 'Ventures');
+    if (id && (projects.length > 0 || ventures.length > 0)) {
+      // First try to find in ventures table
+      let foundVenture: Project | Venture | undefined = ventures.find(v => v.url_slug === id);
+      
+      // If not found in ventures, try projects table with Ventures badge type
+      if (!foundVenture) {
+        foundVenture = projects.find(p => p.url_slug === id && p.badgeType === 'Ventures');
+      }
+      
       setVenture(foundVenture || null);
       
       if (foundVenture) {
-        // Get other ventures sorted by sort_order
-        const otherVentures = projects
-          .filter(p => p.badgeType === 'Ventures' && p.id !== foundVenture.id && p.is_visible)
-          .sort((a, b) => a.sort_order - b.sort_order);
+        // Get other ventures from both tables, sorted by sort_order
+        const otherVentures = [
+          ...ventures.filter(v => v.id !== foundVenture!.id && v.is_visible),
+          ...projects.filter(p => p.badgeType === 'Ventures' && p.id !== foundVenture!.id && p.is_visible)
+        ].sort((a, b) => a.sort_order - b.sort_order);
         
         // Find ventures closest to current venture's sort_order
-        const currentIndex = otherVentures.findIndex(v => v.sort_order > foundVenture.sort_order);
+        const currentIndex = otherVentures.findIndex(v => v.sort_order > foundVenture!.sort_order);
         
-        let related: Project[] = [];
+        let related: (Project | Venture)[] = [];
         
         // Get ventures around the current one (before and after)
         if (currentIndex === -1) {
@@ -49,7 +56,7 @@ export function VenturePage() {
         setRelatedVentures(related);
       }
     }
-  }, [id, projects]);
+  }, [id, projects, ventures]);
 
   if (!venture) {
     return (
@@ -65,7 +72,7 @@ export function VenturePage() {
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-16">
-      <SEO {...generateSEO.project(venture.title, venture.summary)} />
+      <SEO {...generateSEO.project(venture.title, 'summary' in venture ? venture.summary : venture.description)} />
       {/* Back Navigation */}
       <div className="mb-8">
         <Button variant="ghost" size="sm" asChild>
@@ -79,12 +86,12 @@ export function VenturePage() {
       {/* Hero Section */}
       <div className="mb-12">
         <div className="flex items-center gap-3 mb-4">
-          <Badge>{venture.badgeType}</Badge>
+          <Badge>{'badgeType' in venture ? venture.badgeType : 'Venture'}</Badge>
         </div>
         <h1 className="text-[32px] font-bold pb-4">{venture.title}</h1>
         <div className="aspect-[16/10] overflow-hidden rounded-lg">
           <ImageWithFallback
-            src={venture.heroImage}
+            src={'heroImage' in venture ? venture.heroImage : venture.image}
             alt={venture.title}
             className="w-full h-full object-cover"
           />
@@ -93,40 +100,42 @@ export function VenturePage() {
 
       {/* Venture Content */}
       <div className="space-y-12">
-        {/* Business Details */}
-        <section>
-          <h2 className="text-gray-900 mb-4">Business Details</h2>
-          <div className="text-gray-500 rich-text-content" dangerouslySetInnerHTML={{ __html: venture.businessdetails }} />
-        </section>
+        {/* Business Details - only for Project type */}
+        {'businessdetails' in venture && venture.businessdetails && (
+          <section>
+            <h2 className="text-gray-900 mb-4">Business Details</h2>
+            <div className="text-gray-500 rich-text-content" dangerouslySetInnerHTML={{ __html: venture.businessdetails }} />
+          </section>
+        )}
 
-        {/* STAR Sections with Design Work headers */}
-        {venture.situation && (
+        {/* STAR Sections with Design Work headers - only for Project type */}
+        {'situation' in venture && venture.situation && (
           <section>
             <h2 className="text-gray-900 mb-4">Problem</h2>
             <div className="text-gray-500 rich-text-content" dangerouslySetInnerHTML={{ __html: venture.situation }} />
           </section>
         )}
 
-        {venture.task && (
+        {'task' in venture && venture.task && (
           <section>
             <h2 className="text-gray-900 mb-4">Objective</h2>
             <div className="text-gray-500 rich-text-content" dangerouslySetInnerHTML={{ __html: venture.task }} />
           </section>
         )}
 
-        {venture.action && (
+        {'action' in venture && venture.action && (
           <section>
             <h2 className="text-gray-900 mb-4">Actions</h2>
             <div className="text-gray-500 rich-text-content" dangerouslySetInnerHTML={{ __html: venture.action }} />
           </section>
         )}
 
-        {venture.output && (
+        {'output' in venture && venture.output && (
           <section>
             <h2 className="text-gray-900 mb-4">Output</h2>
             <div className="text-gray-500 mb-8 rich-text-content" dangerouslySetInnerHTML={{ __html: venture.output }} />
           
-            {venture.metrics && venture.metrics.length > 0 && (
+            {'metrics' in venture && venture.metrics && venture.metrics.length > 0 && (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {venture.metrics.map((metric, index) => (
                   <Card key={index} className="p-6 text-center hover:shadow-lg transition-shadow duration-200 border-0 shadow-sm">
@@ -140,7 +149,7 @@ export function VenturePage() {
           </section>
         )}
 
-        {venture.lessonsLearned && (
+        {'lessonsLearned' in venture && venture.lessonsLearned && (
           <section>
             <h2 className="text-gray-900 mb-4">Lessons</h2>
             <div className="text-gray-500 rich-text-content" dangerouslySetInnerHTML={{ __html: venture.lessonsLearned }} />
@@ -157,18 +166,22 @@ export function VenturePage() {
               <Card className="group overflow-hidden border-0 shadow-sm hover:shadow-lg transition-all duration-300">
                 <div className="aspect-[4/3] overflow-hidden">
                   <ImageWithFallback
-                    src={relatedVenture.heroImage}
+                    src={'heroImage' in relatedVenture ? relatedVenture.heroImage : relatedVenture.image}
                     alt={relatedVenture.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                 </div>
                 <div className="p-4">
                   <div className="flex items-center justify-between mb-2">
-                    <Badge variant="secondary" className="text-xs">{relatedVenture.badgeType}</Badge>
+                    <Badge variant="secondary" className="text-xs">
+                      {'badgeType' in relatedVenture ? relatedVenture.badgeType : 'Venture'}
+                    </Badge>
                     <ArrowRight className="w-3 h-3 text-gray-400 group-hover:text-gray-600 transition-colors" />
                   </div>
                   <h3 className="text-gray-900 mb-1">{relatedVenture.title}</h3>
-                  <p className="text-gray-600 text-sm" dangerouslySetInnerHTML={{ __html: relatedVenture.summary }} />
+                  <p className="text-gray-600 text-sm" dangerouslySetInnerHTML={{ 
+                    __html: 'summary' in relatedVenture ? relatedVenture.summary : relatedVenture.description 
+                  }} />
                 </div>
               </Card>
             </Link>

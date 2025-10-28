@@ -11,9 +11,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { Upload, Save, Plus, Edit, Trash2, Eye, AlertCircle, Minus, LogOut, User } from 'lucide-react';
 // Removed mock data import - using only Supabase data
-import { useProjects, useVentures, useResume } from '../hooks/useSupabase';
+import { useProjects, useVentures, useResume, useSeries } from '../hooks/useSupabase';
 import { ResumeAdmin } from './ResumeAdmin';
-import { supabase, Project } from '../lib/supabase';
+import { supabase, Project, Series } from '../lib/supabase';
 import { RichTextEditor } from './RichTextEditor';
 
 export function AdminPage() {
@@ -38,6 +38,15 @@ export function AdminPage() {
     editVenture, 
     removeVenture 
   } = useVentures();
+  
+  const { 
+    series, 
+    loading: seriesLoading, 
+    error: seriesError, 
+    addSeries, 
+    editSeries, 
+    removeSeries 
+  } = useSeries();
   
   const { 
     resume, 
@@ -69,7 +78,13 @@ export function AdminPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [showSupabaseWarning, setShowSupabaseWarning] = useState(true);
   const [validationErrors, setValidationErrors] = useState<{[key: string]: string}>({});
+  
+  // Series state
+  const [activeSeries, setActiveSeries] = useState<Series | null>(null);
+  const [isEditingSeries, setIsEditingSeries] = useState(false);
+  const [showNewSeries, setShowNewSeries] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const seriesFileInputRef = useRef<HTMLInputElement>(null);
 
   // Set active project when projects load
   useEffect(() => {
@@ -141,6 +156,35 @@ export function AdminPage() {
     } catch (error) {
       console.error('Save error:', error);
       alert('Failed to save changes. Check your Supabase configuration.');
+    }
+  };
+
+  const handleSaveSeries = async () => {
+    if (!activeSeries) return;
+    
+    try {
+      if (showNewSeries) {
+        // Create new series
+        const { id, created_at, updated_at, ...seriesData } = activeSeries;
+        const newSeries = await addSeries(seriesData);
+        if (newSeries) {
+          setActiveSeries(newSeries);
+          setIsEditingSeries(false);
+          setShowNewSeries(false);
+          alert('Series created successfully!');
+        }
+      } else {
+        // Update existing series
+        const updatedSeries = await editSeries(activeSeries.id, activeSeries);
+        if (updatedSeries) {
+          setActiveSeries(updatedSeries);
+          setIsEditingSeries(false);
+          alert('Series updated successfully!');
+        }
+      }
+    } catch (error) {
+      console.error('Series save error:', error);
+      alert('Failed to save series changes.');
     }
   };
 
@@ -239,6 +283,73 @@ export function AdminPage() {
     fileInputRef.current?.click();
   };
 
+  const handleSeriesImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Check if Supabase is properly configured
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    
+    if (!supabaseUrl || !supabaseKey || supabaseUrl.includes('placeholder') || supabaseKey.includes('placeholder')) {
+      alert('Supabase not configured. Please set up your .env.local file with VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY');
+      return;
+    }
+
+    try {
+      // Check file size (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        alert('File size too large. Please select an image smaller than 10MB.');
+        return;
+      }
+
+      // Upload to Supabase Storage
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}.${fileExt}`;
+      const filePath = `series/${fileName}`;
+
+      console.log('Uploading series image to:', filePath);
+
+      const { data, error } = await supabase.storage
+        .from('site_images')
+        .upload(filePath, file);
+
+      if (error) {
+        console.error('Series upload error details:', error);
+        
+        // Provide specific error messages
+        if (error.message.includes('Bucket not found')) {
+          alert('Storage bucket "site_images" not found. Please create it in your Supabase dashboard.');
+        } else if (error.message.includes('permission')) {
+          alert('Permission denied. Please check your Supabase Storage policies.');
+        } else {
+          alert(`Upload failed: ${error.message}`);
+        }
+        return;
+      }
+
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from('site_images')
+        .getPublicUrl(filePath);
+
+      console.log('Series upload successful, URL:', urlData.publicUrl);
+
+      // Update series with new image URL
+      if (activeSeries) {
+        setActiveSeries({...activeSeries, image_url: urlData.publicUrl});
+      }
+      
+    } catch (error) {
+      console.error('Series upload error:', error);
+      alert(`Failed to upload series image: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
+  const triggerSeriesFileUpload = () => {
+    seriesFileInputRef.current?.click();
+  };
+
   // Metrics management functions
   const addMetric = () => {
     const newMetric = {
@@ -273,17 +384,21 @@ export function AdminPage() {
   };
 
   // Use Supabase data if available, fallback to mock data
+  // Filter out projects that are assigned to series (they'll be managed from Series tab)
   // Sort projects by last edited (updatedAt) - most recent first
-  const displayProjects = [...projects].sort((a, b) => {
-    const dateA = new Date(a.updatedAt || a.createdAt).getTime();
-    const dateB = new Date(b.updatedAt || b.createdAt).getTime();
-    return dateB - dateA; // Descending order (newest first)
-  });
+  const displayProjects = [...projects]
+    .filter(project => !project.series_id) // Hide projects assigned to series
+    .sort((a, b) => {
+      const dateA = new Date(a.updatedAt || a.createdAt).getTime();
+      const dateB = new Date(b.updatedAt || b.createdAt).getTime();
+      return dateB - dateA; // Descending order (newest first)
+    });
   const displayVentures = ventures;
   
   // Debug logging
   console.log('AdminPage - Projects count:', projects.length);
   console.log('AdminPage - Display projects:', displayProjects);
+  console.log('AdminPage - Series count:', series.length);
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-16">
@@ -335,25 +450,26 @@ export function AdminPage() {
         )}
 
         {/* Loading States */}
-        {(projectsLoading || venturesLoading || resumeLoading) && (
+        {(projectsLoading || venturesLoading || seriesLoading || resumeLoading) && (
           <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
             <p className="text-sm text-blue-700">Loading data from Supabase...</p>
           </div>
         )}
 
         {/* Error States */}
-        {(projectsError || venturesError || resumeError) && (
+        {(projectsError || venturesError || seriesError || resumeError) && (
           <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
             <p className="text-sm text-red-700">
-              Error connecting to Supabase: {projectsError || venturesError || resumeError}
+              Error connecting to Supabase: {projectsError || venturesError || seriesError || resumeError}
             </p>
           </div>
         )}
       </div>
 
       <Tabs defaultValue="projects" className="space-y-8">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="projects">Projects</TabsTrigger>
+          <TabsTrigger value="series">Series</TabsTrigger>
           <TabsTrigger value="resume">Resume</TabsTrigger>
         </TabsList>
 
@@ -552,6 +668,51 @@ export function AdminPage() {
                       </SelectContent>
                     </Select>
                   </div>
+                </div>
+
+                {/* Series Assignment */}
+                <div>
+                  <Label htmlFor="series">Series Assignment</Label>
+                  <Select 
+                    disabled={!isEditing || seriesLoading}
+                    value={activeProject.series_id || 'none'}
+                    onValueChange={(value) => {
+                      const seriesId = value === 'none' ? undefined : value;
+                      setActiveProject({...activeProject, series_id: seriesId});
+                    }}
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder={seriesLoading ? "Loading series..." : "Select a series (optional)"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">No Series (Standalone Project)</SelectItem>
+                      {(() => {
+                        // Map project badge types to series badge types
+                        const badgeTypeMapping: { [key: string]: string } = {
+                          'UX Design': 'Design Work',
+                          'UX Strategy': 'Design Work',
+                          'Ventures': 'Ventures'
+                        };
+                        
+                        const seriesBadgeType = badgeTypeMapping[activeProject.badgeType] || activeProject.badgeType;
+                        const filteredSeries = series.filter(s => s.badge_type === seriesBadgeType);
+                        
+                        return filteredSeries
+                          .sort((a, b) => a.title.localeCompare(b.title))
+                          .map((s) => (
+                            <SelectItem key={s.id} value={s.id}>
+                              {s.title}
+                            </SelectItem>
+                          ));
+                      })()}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {activeProject.series_id 
+                      ? 'This project will be managed from the Series tab and hidden from the main projects list.'
+                      : 'This project will appear on the main projects list.'
+                    }
+                  </p>
                 </div>
 
                 {/* Hero Image */}
@@ -936,6 +1097,492 @@ export function AdminPage() {
         {/* Resume Tab */}
         <TabsContent value="resume">
           <ResumeAdmin />
+        </TabsContent>
+
+        {/* Series Tab */}
+        <TabsContent value="series" className="space-y-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <h2 className="text-xl font-semibold">Series Management</h2>
+              <p className="text-gray-600 mt-1">Create and manage project series (e.g., "Ring Help Case Studies")</p>
+            </div>
+            <Button onClick={() => {
+              setActiveSeries({
+                id: '',
+                title: '',
+                description: '',
+                badge_type: 'Design Work',
+                image_url: '',
+                url_slug: '',
+                sort_order: 0,
+                is_visible: true,
+                created_at: '',
+                updated_at: ''
+              });
+              setIsEditingSeries(true);
+              setShowNewSeries(true);
+            }}>
+              <Plus className="w-4 h-4 mr-2" />
+              Add Series
+            </Button>
+          </div>
+
+          {/* Series List */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Series List */}
+            <div className="space-y-4">
+              <h3 className="font-medium text-gray-900">Series ({series.length})</h3>
+              {series.length > 0 ? (
+                series
+                  .sort((a, b) => a.title.localeCompare(b.title)) // Alphabetical sort
+                  .map((s) => (
+                    <Card
+                      key={s.id}
+                      className={`p-4 cursor-pointer transition-colors ${
+                        activeSeries?.id === s.id ? 'ring-2 ring-blue-500' : 'hover:bg-gray-50'
+                      }`}
+                      onClick={() => !isEditingSeries && setActiveSeries(s)}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="font-medium">{s.title}</h4>
+                          <p className="text-sm text-gray-600">{s.badge_type}</p>
+                          <p className="text-xs text-gray-500">
+                            {s.is_visible ? 'Visible' : 'Hidden'} • Order: {s.sort_order}
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveSeries(s);
+                              setIsEditingSeries(true);
+                              setShowNewSeries(false);
+                            }}
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (confirm('Are you sure you want to delete this series?')) {
+                                removeSeries(s.id);
+                              }
+                            }}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </Card>
+                  ))
+              ) : (
+                <p className="text-gray-500 text-center py-8">No series created yet.</p>
+              )}
+            </div>
+
+            {/* Series Editor */}
+            {activeSeries && (
+              <Card className="p-6">
+                <h3 className="font-medium text-gray-900 mb-4">
+                  {showNewSeries ? 'Add New Series' : 'Edit Series'}
+                </h3>
+                
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="series-title">Series Title *</Label>
+                    <Input
+                      id="series-title"
+                      value={activeSeries.title}
+                      onChange={(e) => setActiveSeries({ ...activeSeries, title: e.target.value })}
+                      disabled={!isEditingSeries}
+                      placeholder="e.g., Ring Help Case Studies"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="series-description">Description *</Label>
+                    <Textarea
+                      id="series-description"
+                      value={activeSeries.description}
+                      onChange={(e) => setActiveSeries({ ...activeSeries, description: e.target.value })}
+                      disabled={!isEditingSeries}
+                      rows={3}
+                      placeholder="Brief description of the series..."
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="series-badge">Badge Type</Label>
+                    <Select 
+                      disabled={!isEditingSeries}
+                      value={activeSeries.badge_type}
+                      onValueChange={(value) => setActiveSeries({ ...activeSeries, badge_type: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Design Work">Design Work</SelectItem>
+                        <SelectItem value="Ventures">Ventures</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="series-slug">URL Slug *</Label>
+                    <Input
+                      id="series-slug"
+                      value={activeSeries.url_slug}
+                      onChange={(e) => setActiveSeries({ ...activeSeries, url_slug: e.target.value })}
+                      disabled={!isEditingSeries}
+                      placeholder="e.g., ring-help"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      URL: /{activeSeries.badge_type === 'Design Work' ? 'design-work' : 'ventures'}/{activeSeries.url_slug}
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="series-image">Series Image</Label>
+                    <div className="mt-2 space-y-3">
+                      {activeSeries.image_url ? (
+                        <div className="aspect-[16/10] max-w-md overflow-hidden rounded-lg border">
+                          <ImageWithFallback
+                            src={activeSeries.image_url}
+                            alt={activeSeries.title}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div className="aspect-[16/10] max-w-md border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center">
+                          <p className="text-gray-500 text-sm">No image selected</p>
+                        </div>
+                      )}
+                      {isEditingSeries && (
+                        <div className="space-y-2">
+                          <input
+                            ref={seriesFileInputRef}
+                            type="file"
+                            accept="image/*"
+                            onChange={handleSeriesImageUpload}
+                            className="hidden"
+                          />
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={triggerSeriesFileUpload} 
+                            className="flex items-center gap-2"
+                          >
+                            <Upload className="w-4 h-4" />
+                            Upload Image
+                          </Button>
+                          <div className="text-xs text-gray-500">
+                            Or enter image URL:
+                          </div>
+                          <Input
+                            value={activeSeries.image_url}
+                            onChange={(e) => setActiveSeries({ ...activeSeries, image_url: e.target.value })}
+                            placeholder="https://example.com/image.jpg"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="series-order">Display Order</Label>
+                      <Input
+                        id="series-order"
+                        type="number"
+                        value={activeSeries.sort_order}
+                        onChange={(e) => setActiveSeries({ ...activeSeries, sort_order: parseInt(e.target.value) })}
+                        disabled={!isEditingSeries}
+                      />
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id="series-visible"
+                        checked={activeSeries.is_visible}
+                        onChange={(e) => setActiveSeries({ ...activeSeries, is_visible: e.target.checked })}
+                        disabled={!isEditingSeries}
+                        className="rounded"
+                      />
+                      <Label htmlFor="series-visible">Visible</Label>
+                    </div>
+                  </div>
+
+                  {isEditingSeries && (
+                    <div className="flex gap-2 pt-4">
+                      <Button onClick={handleSaveSeries}>
+                        <Save className="w-4 h-4 mr-2" />
+                        Save Series
+                      </Button>
+                      <Button variant="outline" onClick={() => setIsEditingSeries(false)}>
+                        Cancel
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </Card>
+            )}
+
+            {/* Projects in Series Management */}
+            {activeSeries && !showNewSeries && (
+              <Card className="p-6">
+                <h3 className="font-medium text-gray-900 mb-4">
+                  Projects in "{activeSeries.title}"
+                </h3>
+                
+                {(() => {
+                  const seriesProjects = projects.filter(p => p.series_id === activeSeries.id);
+                  return seriesProjects.length > 0 ? (
+                    <div className="space-y-3">
+                      {seriesProjects
+                        .sort((a, b) => a.sort_order - b.sort_order)
+                        .map((project) => (
+                          <div key={project.id} className="flex items-center justify-between p-3 border rounded-lg">
+                            <div className="flex items-center gap-3">
+                              <div className="w-12 h-8 bg-gray-100 rounded flex items-center justify-center text-xs font-medium">
+                                {project.sort_order}
+                              </div>
+                              <div>
+                                <h4 className="font-medium">{project.title}</h4>
+                                <p className="text-sm text-gray-600">{project.badgeType}</p>
+                              </div>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setActiveProject(project);
+                                  setIsEditing(true);
+                                }}
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  if (confirm(`Remove "${project.title}" from this series?`)) {
+                                    editProject(project.id, { ...project, series_id: undefined });
+                                  }
+                                }}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <p className="text-gray-500 mb-4">No projects assigned to this series yet.</p>
+                      <p className="text-sm text-gray-400">
+                        Go to the Projects tab and assign projects to this series using the Series dropdown.
+                      </p>
+                    </div>
+                  );
+                })()}
+              </Card>
+            )}
+
+            {/* Project Editor in Series Tab */}
+            {activeProject && isEditing && (
+              <Card className="p-6">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="font-medium text-gray-900">
+                    Edit Project: {activeProject.title}
+                  </h3>
+                  <div className="flex gap-2">
+                    <Button onClick={handleSave}>
+                      <Save className="w-4 h-4 mr-2" />
+                      Save Project
+                    </Button>
+                    <Button variant="outline" onClick={() => setIsEditing(false)}>
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Project Form - Same as Projects tab */}
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="title">Project Title *</Label>
+                      <Input
+                        id="title"
+                        value={activeProject.title}
+                        onChange={(e) => setActiveProject({...activeProject, title: e.target.value})}
+                        disabled={!isEditing}
+                        placeholder="Enter project title"
+                      />
+                      {validationErrors.title && (
+                        <p className="text-red-500 text-xs mt-1">{validationErrors.title}</p>
+                      )}
+                    </div>
+                    <div>
+                      <Label htmlFor="badge">Badge Type</Label>
+                      <Select 
+                        disabled={!isEditing}
+                        value={activeProject.badgeType}
+                        onValueChange={(value) => setActiveProject({...activeProject, badgeType: value})}
+                      >
+                        <SelectTrigger className="mt-1">
+                          <SelectValue placeholder={activeProject.badgeType} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="UX Design">UX Design</SelectItem>
+                          <SelectItem value="UX Strategy">UX Strategy</SelectItem>
+                          <SelectItem value="Ventures">Ventures</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  {/* Series Assignment */}
+                  <div>
+                    <Label htmlFor="series">Series Assignment</Label>
+                    <Select 
+                      disabled={!isEditing || seriesLoading}
+                      value={activeProject.series_id || 'none'}
+                      onValueChange={(value) => {
+                        const seriesId = value === 'none' ? undefined : value;
+                        setActiveProject({...activeProject, series_id: seriesId});
+                      }}
+                    >
+                      <SelectTrigger className="mt-1">
+                        <SelectValue placeholder={seriesLoading ? "Loading series..." : "Select a series (optional)"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">No Series (Standalone Project)</SelectItem>
+                        {(() => {
+                          // Map project badge types to series badge types
+                          const badgeTypeMapping: { [key: string]: string } = {
+                            'UX Design': 'Design Work',
+                            'UX Strategy': 'Design Work',
+                            'Ventures': 'Ventures'
+                          };
+                          
+                          const seriesBadgeType = badgeTypeMapping[activeProject.badgeType] || activeProject.badgeType;
+                          const filteredSeries = series.filter(s => s.badge_type === seriesBadgeType);
+                          
+                          return filteredSeries
+                            .sort((a, b) => a.title.localeCompare(b.title))
+                            .map((s) => (
+                              <SelectItem key={s.id} value={s.id}>
+                                {s.title}
+                              </SelectItem>
+                            ));
+                        })()}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {activeProject.series_id 
+                        ? 'This project will be managed from the Series tab and hidden from the main projects list.'
+                        : 'This project will appear on the main projects list.'
+                      }
+                    </p>
+                  </div>
+
+                  {/* Summary */}
+                  <div>
+                    <Label htmlFor="summary">Project Summary *</Label>
+                    <Textarea
+                      id="summary"
+                      value={activeProject.summary}
+                      onChange={(e) => setActiveProject({...activeProject, summary: e.target.value})}
+                      disabled={!isEditing}
+                      rows={3}
+                      placeholder="Brief description of the project..."
+                    />
+                  </div>
+
+                  {/* Business Details */}
+                  <div>
+                    <Label htmlFor="businessdetails">Business Details</Label>
+                    <RichTextEditor
+                      content={activeProject.businessdetails}
+                      onChange={(content) => setActiveProject({...activeProject, businessdetails: content})}
+                      disabled={!isEditing}
+                      placeholder="Describe the business context, goals, and challenges..."
+                    />
+                  </div>
+
+                  {/* Situation */}
+                  <div>
+                    <Label htmlFor="situation">Situation</Label>
+                    <RichTextEditor
+                      content={activeProject.situation}
+                      onChange={(content) => setActiveProject({...activeProject, situation: content})}
+                      disabled={!isEditing}
+                      placeholder="Describe the current situation and problem statement..."
+                    />
+                  </div>
+
+                  {/* Task */}
+                  <div>
+                    <Label htmlFor="task">Task</Label>
+                    <RichTextEditor
+                      content={activeProject.task}
+                      onChange={(content) => setActiveProject({...activeProject, task: content})}
+                      disabled={!isEditing}
+                      placeholder="Describe the specific task or challenge..."
+                    />
+                  </div>
+
+                  {/* Action */}
+                  <div>
+                    <Label htmlFor="action">Action</Label>
+                    <RichTextEditor
+                      content={activeProject.action}
+                      onChange={(content) => setActiveProject({...activeProject, action: content})}
+                      disabled={!isEditing}
+                      placeholder="Describe the actions taken and process followed..."
+                    />
+                  </div>
+
+                  {/* Result */}
+                  <div>
+                    <Label htmlFor="result">Result</Label>
+                    <RichTextEditor
+                      content={activeProject.result}
+                      onChange={(content) => setActiveProject({...activeProject, result: content})}
+                      disabled={!isEditing}
+                      placeholder="Describe the outcomes and results achieved..."
+                    />
+                  </div>
+
+                  {/* Sort Order */}
+                  <div>
+                    <Label htmlFor="sort-order">Sort Order</Label>
+                    <Input
+                      id="sort-order"
+                      type="number"
+                      value={activeProject.sort_order}
+                      onChange={(e) => setActiveProject({...activeProject, sort_order: parseInt(e.target.value) || 0})}
+                      disabled={!isEditing}
+                      placeholder="Display order"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      {activeProject.series_id 
+                        ? 'Controls order within the series page.'
+                        : 'Controls order on the main projects page.'
+                      }
+                    </p>
+                  </div>
+                </div>
+              </Card>
+            )}
+          </div>
         </TabsContent>
 
       </Tabs>

@@ -38,8 +38,22 @@ export interface Project {
   url_slug: string
   show_on_homepage: boolean
   homepage_display_order: number | null
+  series_id?: string
   createdAt: string
   updatedAt: string
+}
+
+export interface Series {
+  id: string
+  title: string
+  description: string
+  badge_type: string
+  image_url: string
+  url_slug: string
+  sort_order: number
+  is_visible: boolean
+  created_at: string
+  updated_at: string
 }
 
 export interface Venture {

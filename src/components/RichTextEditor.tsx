@@ -39,6 +39,38 @@ export function RichTextEditor({
   disabled = false,
   className = ""
 }: RichTextEditorProps) {
+  // Clean content by removing wrapper divs and extracting inner HTML
+  const cleanContent = React.useMemo(() => {
+    if (!content) return '';
+    
+    console.log('RichTextEditor - Original content:', content);
+    
+    // If content is wrapped in rich-text-content div, extract the inner HTML
+    if (content.includes('<div class="rich-text-content">')) {
+      // More robust regex to handle multiline content
+      const match = content.match(/<div class="rich-text-content">([\s\S]*?)<\/div>/);
+      if (match && match[1]) {
+        const cleaned = match[1].trim();
+        console.log('RichTextEditor - Cleaned content:', cleaned);
+        return cleaned;
+      }
+    }
+    
+    // Also handle cases where content might be wrapped in other divs
+    if (content.includes('<div')) {
+      // Try to extract content from any div wrapper
+      const divMatch = content.match(/<div[^>]*>([\s\S]*?)<\/div>/);
+      if (divMatch && divMatch[1]) {
+        const cleaned = divMatch[1].trim();
+        console.log('RichTextEditor - Div-cleaned content:', cleaned);
+        return cleaned;
+      }
+    }
+    
+    console.log('RichTextEditor - Using original content:', content);
+    return content;
+  }, [content]);
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -75,7 +107,7 @@ export function RichTextEditor({
       TextStyle,
       Color,
     ],
-    content,
+    content: cleanContent,
     editable: !disabled,
     onUpdate: ({ editor }) => {
       onChange(editor.getHTML());

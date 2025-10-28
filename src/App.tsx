@@ -11,6 +11,8 @@ import { DesignWorkPage } from './components/DesignWorkPage';
 import { ProjectPage } from './components/ProjectPage';
 import { VenturesPage } from './components/VenturesPage';
 import { VenturePage } from './components/VenturePage';
+import { SeriesPage } from './components/SeriesPage';
+import { DynamicRoute } from './components/DynamicRoute';
 import { LoginPage } from './components/LoginPage';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
@@ -31,9 +33,9 @@ export default function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/resume" element={<ResumePage />} />
             <Route path="/design-work" element={<DesignWorkPage />} />
-            <Route path="/design-work/:id" element={<ProjectPage />} />
+            <Route path="/design-work/:id" element={<DynamicRoute type="design-work" />} />
             <Route path="/ventures" element={<VenturesPage />} />
-            <Route path="/ventures/:id" element={<VenturePage />} />
+            <Route path="/ventures/:id" element={<DynamicRoute type="ventures" />} />
             <Route path="/login" element={<LoginPage />} />
             <Route 
               path="/admin" 
