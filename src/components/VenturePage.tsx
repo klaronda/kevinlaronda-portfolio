@@ -11,11 +11,16 @@ import type { Project, Venture } from '../lib/supabase';
 
 export function VenturePage() {
   const { id } = useParams<{ id: string }>();
-  const { projects, ventures } = useSupabase();
+  const { projects, ventures, projectsLoading, venturesLoading } = useSupabase();
   const [venture, setVenture] = useState<Project | Venture | null>(null);
   const [relatedVentures, setRelatedVentures] = useState<(Project | Venture)[]>([]);
 
   useEffect(() => {
+    // Wait for data to be loaded
+    if (projectsLoading || venturesLoading) {
+      return;
+    }
+
     if (id && (projects.length > 0 || ventures.length > 0)) {
       // First try to find in ventures table
       let foundVenture: Project | Venture | undefined = ventures.find(v => v.url_slug === id);
@@ -56,7 +61,18 @@ export function VenturePage() {
         setRelatedVentures(related);
       }
     }
-  }, [id, projects, ventures]);
+  }, [id, projects, ventures, projectsLoading, venturesLoading]);
+
+  if (projectsLoading || venturesLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading venture...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!venture) {
     return (

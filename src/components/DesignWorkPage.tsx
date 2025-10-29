@@ -14,6 +14,11 @@ export function DesignWorkPage() {
   const [displayItems, setDisplayItems] = useState<(Project | Series)[]>([]);
 
   useEffect(() => {
+    // Wait for data to be loaded
+    if (loading) {
+      return;
+    }
+
     // Filter out projects that belong to series (they'll be shown as series cards)
     const standaloneProjects = projects.filter(project => 
       project.is_visible && 
@@ -31,7 +36,18 @@ export function DesignWorkPage() {
       .sort((a, b) => a.sort_order - b.sort_order);
 
     setDisplayItems(combined);
-  }, [projects, series]);
+  }, [projects, series, loading]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading design work...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-16">

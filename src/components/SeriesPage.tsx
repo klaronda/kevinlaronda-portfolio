@@ -112,7 +112,7 @@ export function SeriesPage() {
           {/* Series Hero Section */}
           <div className="mb-12">
             <div className="flex items-center gap-3 mb-4">
-              <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
+              <span className="px-3 py-1 bg-gray-900 text-white text-sm font-medium rounded-full">
                 Series
               </span>
               <span className="px-3 py-1 bg-gray-100 text-gray-800 text-sm font-medium rounded-full">
@@ -149,11 +149,8 @@ export function SeriesPage() {
                       </div>
                       <div className="p-6">
                         <div className="flex items-center gap-2 mb-3">
-                          <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded">
+                          <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-full">
                             {project.badgeType}
-                          </span>
-                          <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded">
-                            Part {project.sort_order}
                           </span>
                         </div>
                         <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
