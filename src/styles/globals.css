@@ -475,6 +475,22 @@ html {
   margin: 1rem 0;
 }
 
+.rich-text-content iframe,
+.rich-text-content div[data-iframe-embed] {
+  max-width: 100%;
+  width: 100%;
+  border-radius: 0.5rem;
+  margin: 1rem 0;
+  display: block;
+}
+
+.rich-text-content div[data-iframe-embed] iframe {
+  width: 100%;
+  max-width: 100%;
+  border-radius: 0.5rem;
+  display: block;
+}
+
 .rich-text-content br {
   display: block !important;
   content: "" !important;
@@ -527,6 +543,20 @@ html {
   width: 100%;
   border-radius: 0.5rem;
   margin: 1rem 0;
+  display: block;
+}
+
+/* Iframe embed container */
+.ProseMirror div[data-iframe-embed] {
+  width: 100%;
+  margin: 1rem 0;
+  display: block;
+}
+
+.ProseMirror div[data-iframe-embed] iframe {
+  width: 100%;
+  max-width: 100%;
+  border-radius: 0.5rem;
   display: block;
 }
 

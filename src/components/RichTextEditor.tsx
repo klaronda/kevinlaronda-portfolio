@@ -6,6 +6,7 @@ import Youtube from '@tiptap/extension-youtube';
 import Underline from '@tiptap/extension-underline';
 import { TextStyle } from '@tiptap/extension-text-style';
 import Color from '@tiptap/extension-color';
+import { Node, mergeAttributes } from '@tiptap/core';
 import 'prosemirror-view/style/prosemirror.css';
 import { 
   Bold, 
@@ -17,12 +18,87 @@ import {
   Link as LinkIcon,
   Youtube as YoutubeIcon,
   Pilcrow,
-  WrapText
+  WrapText,
+  Code
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { supabase } from '../lib/supabase';
+
+// Custom Iframe Extension for embedding Figma prototypes and other iframes
+const IframeEmbed = Node.create({
+  name: 'iframeEmbed',
+  group: 'block',
+  atom: true,
+
+  addAttributes() {
+    return {
+      src: {
+        default: null,
+      },
+      width: {
+        default: '100%',
+      },
+      height: {
+        default: '450',
+      },
+      style: {
+        default: null,
+      },
+      allowfullscreen: {
+        default: null,
+      },
+    };
+  },
+
+  parseHTML() {
+    return [
+      {
+        tag: 'div[data-iframe-embed]',
+      },
+      {
+        tag: 'iframe',
+        getAttrs: (node) => {
+          if (typeof node === 'string') return false;
+          const iframe = node as HTMLIFrameElement;
+          return {
+            src: iframe.getAttribute('src'),
+            width: iframe.getAttribute('width') || '100%',
+            height: iframe.getAttribute('height') || '450',
+            style: iframe.getAttribute('style'),
+            allowfullscreen: iframe.hasAttribute('allowfullscreen'),
+          };
+        },
+      },
+    ];
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    // Build iframe attributes
+    const iframeAttrs: any = {
+      src: HTMLAttributes.src || '',
+      width: HTMLAttributes.width || '100%',
+      height: HTMLAttributes.height || '450',
+      class: 'w-full rounded-lg',
+      style: 'border: 1px solid rgba(0, 0, 0, 0.1);',
+    };
+
+    if (HTMLAttributes.style) {
+      iframeAttrs.style = `${iframeAttrs.style} ${HTMLAttributes.style}`;
+    }
+
+    if (HTMLAttributes.allowfullscreen) {
+      iframeAttrs.allowfullscreen = '';
+    }
+
+    return [
+      'div',
+      { 'data-iframe-embed': '', class: 'w-full my-4' },
+      ['iframe', mergeAttributes(iframeAttrs)],
+    ];
+  },
+});
 
 interface RichTextEditorProps {
   content: string;
@@ -104,6 +180,7 @@ export function RichTextEditor({
           style: 'width: 100%; aspect-ratio: 16/9;',
         },
       }),
+      IframeEmbed,
       TextStyle,
       Color,
     ],
@@ -201,6 +278,54 @@ export function RichTextEditor({
     const url = window.prompt('Enter YouTube URL:');
     if (url) {
       editor?.chain().focus().setYoutubeVideo({ src: url }).run();
+    }
+  }, [editor]);
+
+  const addIframeEmbed = useCallback(() => {
+    const iframeCode = window.prompt('Paste your iframe embed code:');
+    if (!iframeCode || !iframeCode.trim()) return;
+
+    const trimmedCode = iframeCode.trim();
+
+    // Try to extract iframe from the pasted HTML
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = trimmedCode;
+
+    let iframe: HTMLIFrameElement | null = null;
+    
+    // Check if the pasted content contains an iframe
+    if (tempDiv.querySelector('iframe')) {
+      iframe = tempDiv.querySelector('iframe') as HTMLIFrameElement;
+    }
+
+    // If we found an iframe, extract its attributes
+    if (iframe) {
+      const src = iframe.getAttribute('src') || '';
+      const width = iframe.getAttribute('width') || '100%';
+      const height = iframe.getAttribute('height') || '450';
+      const style = iframe.getAttribute('style') || '';
+      const allowfullscreen = iframe.hasAttribute('allowfullscreen');
+
+      if (!src) {
+        alert('Invalid iframe code: No src attribute found');
+        return;
+      }
+
+      // Insert the iframe embed using our custom node
+      editor?.chain().focus().insertContent({
+        type: 'iframeEmbed',
+        attrs: {
+          src,
+          width,
+          height,
+          style,
+          allowfullscreen: allowfullscreen || null,
+        },
+      }).run();
+    } else {
+      // If no iframe found, try to insert as raw HTML
+      // TipTap will parse it and our parseHTML should catch it
+      editor?.chain().focus().insertContent(trimmedCode).run();
     }
   }, [editor]);
 
@@ -340,6 +465,17 @@ export function RichTextEditor({
             title="Embed YouTube Video"
           >
             <YoutubeIcon className="w-4 h-4" />
+          </Button>
+
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={addIframeEmbed}
+            className="h-8 w-8 p-0"
+            title="Embed Code (Figma, etc.)"
+          >
+            <Code className="w-4 h-4" />
           </Button>
 
         </div>
