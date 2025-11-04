@@ -142,7 +142,7 @@ export function SeriesPage() {
                         <ImageWithFallback
                           src={project.heroImage}
                           alt={project.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 card-image"
                           width={400}
                           height={250}
                         />

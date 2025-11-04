@@ -136,7 +136,7 @@ export function HomePage() {
                         <ImageWithFallback
                           src={project.heroImage}
                           alt={project.title}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 card-image"
                           width={400}
                           height={300}
                           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"

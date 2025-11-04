@@ -22,7 +22,7 @@ export function DesignWorkPage() {
     // Filter out projects that belong to series (they'll be shown as series cards)
     const standaloneProjects = projects.filter(project => 
       project.is_visible && 
-      (project.badgeType === 'UX Design' || project.badgeType === 'UX Strategy') &&
+      (project.badgeType === 'UX Design' || project.badgeType === 'UX Strategy' || project.badgeType === 'Manager') &&
       !project.series_id
     );
 
@@ -79,7 +79,7 @@ export function DesignWorkPage() {
                         <ImageWithFallback
                           src={series.image_url}
                           alt={series.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 card-image"
                         />
                       </div>
                       <div className="p-6">
@@ -103,7 +103,7 @@ export function DesignWorkPage() {
                         <ImageWithFallback
                           src={project.heroImage}
                           alt={project.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 card-image"
                         />
                       </div>
                       <div className="p-6">

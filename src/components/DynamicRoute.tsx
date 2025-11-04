@@ -36,7 +36,11 @@ export function DynamicRoute({ type }: DynamicRouteProps) {
 
         // Then check if it's a project/venture using loaded data
         if (type === 'design-work') {
-          const foundProject = projects.find(p => p.url_slug === id);
+          // For design-work, only match projects with UX Design, UX Strategy, or Manager badge types
+          const foundProject = projects.find(p => 
+            p.url_slug === id && 
+            (p.badgeType === 'UX Design' || p.badgeType === 'UX Strategy' || p.badgeType === 'Manager')
+          );
           if (foundProject) {
             setRouteType('project');
             return;

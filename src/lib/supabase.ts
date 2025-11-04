@@ -21,6 +21,7 @@ export interface Project {
   badgeType: string
   heroImage: string
   summary: string
+  overview: string
   businessdetails: string
   situation: string
   task: string

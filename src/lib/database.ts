@@ -48,14 +48,28 @@ export const getProject = async (id: string): Promise<Project | null> => {
 }
 
 export const createProject = async (project: Omit<Project, 'id' | 'createdAt' | 'updatedAt'>): Promise<Project | null> => {
+  // Exclude overview if it's empty to avoid errors if column doesn't exist yet
+  const { overview, ...projectWithoutOverview } = project;
+  const projectData: any = { ...projectWithoutOverview };
+  
+  // Only include overview if it has a value (assuming column exists)
+  // If column doesn't exist, user will need to add it first
+  if (overview !== undefined && overview !== null && overview !== '') {
+    projectData.overview = overview;
+  }
+
   const { data, error } = await supabase
     .from('projects')
-    .insert([project])
+    .insert([projectData])
     .select()
     .single()
 
   if (error) {
     console.error('Error creating project:', error)
+    // If error is about overview column, provide helpful message
+    if (error.message?.includes('overview') || error.code === 'PGRST116' || error.message?.includes('column') || error.code === '42703') {
+      console.error('Note: The "overview" column may not exist in your database. Please add it via SQL:\nALTER TABLE projects ADD COLUMN overview TEXT DEFAULT \'\';')
+    }
     return null
   }
 
@@ -65,17 +79,47 @@ export const createProject = async (project: Omit<Project, 'id' | 'createdAt' | 
 export const updateProject = async (id: string, updates: Partial<Project>): Promise<Project | null> => {
   console.log('updateProject called with id:', id);
   console.log('updateProject updates:', updates);
+  console.log('updateProject badgeType:', updates.badgeType);
   console.log('updateProject series_id:', updates.series_id);
+  
+  // Exclude overview if it's empty to avoid errors if column doesn't exist yet
+  const { overview, ...updatesWithoutOverview } = updates;
+  const updateData: any = { ...updatesWithoutOverview, updatedAt: new Date().toISOString() };
+  
+  // Only include overview if it has a value (assuming column exists)
+  // If column doesn't exist, user will need to add it first
+  if (overview !== undefined && overview !== null && overview !== '') {
+    updateData.overview = overview;
+  }
+  
+  // Ensure badgeType is included (Supabase might need it as "badgeType" or "badge_type")
+  // Try both formats if needed
+  if (updates.badgeType !== undefined) {
+    updateData.badgeType = updates.badgeType;
+    // Also try snake_case version in case DB uses that
+    // updateData.badge_type = updates.badgeType;
+  }
+  
+  console.log('updateProject - Final updateData being sent:', updateData);
   
   const { data, error } = await supabase
     .from('projects')
-    .update({ ...updates, updatedAt: new Date().toISOString() })
+    .update(updateData)
     .eq('id', id)
     .select()
     .single()
 
   if (error) {
     console.error('Error updating project:', error)
+    console.error('Error details:', JSON.stringify(error, null, 2))
+    // If error is about overview column, provide helpful message
+    if (error.message?.includes('overview') || error.code === 'PGRST116' || error.message?.includes('column') || error.code === '42703') {
+      console.error('Note: The "overview" column may not exist in your database. Please add it via SQL:\nALTER TABLE projects ADD COLUMN overview TEXT DEFAULT \'\';')
+    }
+    // If error is about badgeType/badge_type
+    if (error.message?.includes('badge') || error.message?.includes('Badge')) {
+      console.error('Note: There may be a column name mismatch. Check if your database uses "badgeType" (camelCase) or "badge_type" (snake_case).')
+    }
     return null
   }
 

@@ -198,6 +198,7 @@ export function AdminPage() {
       badgeType: 'UX Design',
       heroImage: '',
       summary: '',
+      overview: '',
       businessdetails: '',
       situation: '',
       task: '',
@@ -667,6 +668,7 @@ export function AdminPage() {
                       <SelectContent>
                         <SelectItem value="UX Design">UX Design</SelectItem>
                         <SelectItem value="UX Strategy">UX Strategy</SelectItem>
+                        <SelectItem value="Manager">Manager</SelectItem>
                         <SelectItem value="Ventures">Ventures</SelectItem>
                       </SelectContent>
                     </Select>
@@ -694,6 +696,7 @@ export function AdminPage() {
                         const badgeTypeMapping: { [key: string]: string } = {
                           'UX Design': 'Design Work',
                           'UX Strategy': 'Design Work',
+                          'Manager': 'Design Work',
                           'Ventures': 'Ventures'
                         };
                         
@@ -770,9 +773,9 @@ export function AdminPage() {
                   </div>
                 </div>
 
-                {/* Summary */}
+                {/* Card Description */}
                 <div>
-                  <Label htmlFor="summary">Summary *</Label>
+                  <Label htmlFor="summary">Card Description *</Label>
                   <div className="mt-1">
                     <RichTextEditor
                       key={`summary-${activeProject.id}-${isEditing}`}
@@ -786,6 +789,21 @@ export function AdminPage() {
                   {validationErrors.summary && (
                     <p className="text-red-500 text-xs mt-1">{validationErrors.summary}</p>
                   )}
+                </div>
+
+                {/* Overview */}
+                <div>
+                  <Label htmlFor="overview">Overview</Label>
+                  <div className="mt-1">
+                    <RichTextEditor
+                      key={`overview-${activeProject.id}-${isEditing}`}
+                      content={activeProject.overview || ''}
+                      onChange={(content) => setActiveProject({...activeProject, overview: content})}
+                      placeholder="Project overview (displayed before STAR sections on project page)..."
+                      disabled={!isEditing}
+                      className="min-h-[200px]"
+                    />
+                  </div>
                 </div>
 
                 {/* Business Details */}
@@ -1445,6 +1463,7 @@ export function AdminPage() {
                         <SelectContent>
                           <SelectItem value="UX Design">UX Design</SelectItem>
                           <SelectItem value="UX Strategy">UX Strategy</SelectItem>
+                          <SelectItem value="Manager">Manager</SelectItem>
                           <SelectItem value="Ventures">Ventures</SelectItem>
                         </SelectContent>
                       </Select>
@@ -1472,6 +1491,7 @@ export function AdminPage() {
                           const badgeTypeMapping: { [key: string]: string } = {
                             'UX Design': 'Design Work',
                             'UX Strategy': 'Design Work',
+                            'Manager': 'Design Work',
                             'Ventures': 'Ventures'
                           };
                           
@@ -1496,17 +1516,34 @@ export function AdminPage() {
                     </p>
                   </div>
 
-                  {/* Summary */}
+                  {/* Card Description */}
                   <div>
-                    <Label htmlFor="summary">Project Summary *</Label>
-                    <Textarea
-                      id="summary"
-                      value={activeProject.summary}
-                      onChange={(e) => setActiveProject({...activeProject, summary: e.target.value})}
-                      disabled={!isEditing}
-                      rows={3}
-                      placeholder="Brief description of the project..."
-                    />
+                    <Label htmlFor="summary">Card Description *</Label>
+                    <div className="mt-1">
+                      <RichTextEditor
+                        key={`summary-series-${activeProject.id}-${isEditing}`}
+                        content={activeProject.summary || ''}
+                        onChange={(content) => setActiveProject({...activeProject, summary: content})}
+                        placeholder="Brief description of the project (shown on cards)..."
+                        disabled={!isEditing}
+                        className="min-h-[200px]"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Overview */}
+                  <div>
+                    <Label htmlFor="overview">Overview</Label>
+                    <div className="mt-1">
+                      <RichTextEditor
+                        key={`overview-series-${activeProject.id}-${isEditing}`}
+                        content={activeProject.overview || ''}
+                        onChange={(content) => setActiveProject({...activeProject, overview: content})}
+                        placeholder="Project overview (displayed before STAR sections on project page)..."
+                        disabled={!isEditing}
+                        className="min-h-[200px]"
+                      />
+                    </div>
                   </div>
 
                   {/* Business Details */}

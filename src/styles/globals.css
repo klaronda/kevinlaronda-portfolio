@@ -473,6 +473,35 @@ html {
   height: auto;
   border-radius: 0.5rem;
   margin: 1rem 0;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.rich-text-content .image-lightbox-wrapper {
+  position: relative !important;
+  display: inline-block;
+  max-width: 100%;
+  width: 100%;
+  margin: 1rem 0;
+}
+
+.rich-text-content .image-lightbox-wrapper:hover .image-expand-button {
+  opacity: 1 !important;
+}
+
+.image-expand-button {
+  position: absolute !important;
+  top: 8px !important;
+  right: 8px !important;
+  z-index: 100 !important;
+}
+
+.rich-text-content .image-lightbox-wrapper img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .rich-text-content iframe,
@@ -482,6 +511,18 @@ html {
   border-radius: 0.5rem;
   margin: 1rem 0;
   display: block;
+}
+
+/* Project page images - light stroke and drop shadow */
+.project-page-image {
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Card images - darker stroke */
+.card-image {
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
 }
 
 .rich-text-content div[data-iframe-embed] iframe {

@@ -83,7 +83,7 @@ export function VenturesPage() {
                       <ImageWithFallback
                         src={series.image_url}
                         alt={series.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 card-image"
                       />
                     </div>
                     <div className="p-6">
@@ -107,7 +107,7 @@ export function VenturesPage() {
                       <ImageWithFallback
                         src={venture.image}
                         alt={venture.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 card-image"
                       />
                     </div>
                     <div className="p-6">
@@ -131,7 +131,7 @@ export function VenturesPage() {
                       <ImageWithFallback
                         src={project.heroImage}
                         alt={project.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 card-image"
                       />
                     </div>
                     <div className="p-6">
