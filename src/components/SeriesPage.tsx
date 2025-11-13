@@ -8,7 +8,7 @@ import { SEO } from './SEO';
 import { getProjectsBySeries } from '../lib/database';
 import { useSupabase } from '../hooks/useSupabase';
 import type { Series, Project } from '../lib/supabase';
-import ReactMarkdown from 'react-markdown';
+import { MarkdownRenderer } from './MarkdownRenderer';
 
 export function SeriesPage() {
   const { id } = useParams<{ id: string }>();
@@ -157,15 +157,10 @@ export function SeriesPage() {
                           {project.title}
                         </h3>
                         <div className="text-gray-600 text-sm leading-relaxed line-clamp-3">
-                          <ReactMarkdown 
-                            components={{
-                              p: ({children}) => <p className="mb-1">{children}</p>,
-                              strong: ({children}) => <strong className="font-semibold">{children}</strong>,
-                              em: ({children}) => <em className="italic">{children}</em>,
-                            }}
-                          >
-                            {project.summary}
-                          </ReactMarkdown>
+                          <MarkdownRenderer
+                            content={project.summary || ''}
+                            className="text-gray-600 text-sm leading-relaxed line-clamp-3 space-y-1"
+                          />
                         </div>
                       </div>
                     </Card>
