@@ -38,19 +38,22 @@ export function MarkdownRenderer({ content, className = "" }: MarkdownRendererPr
     // If content has HTML tags, render as HTML
     return (
       <div 
-        className={className}
+        className={`rich-text-content ${className}`}
         dangerouslySetInnerHTML={{ __html: decodedContent }}
       />
     );
   } else {
     // If content is plain text or markdown, use ReactMarkdown
     return (
-      <div className={className}>
+      <div className={`rich-text-content ${className}`}>
         <ReactMarkdown 
           components={{
             p: ({children}) => <p className="mb-2">{children}</p>,
             strong: ({children}) => <strong className="font-semibold">{children}</strong>,
             em: ({children}) => <em className="italic">{children}</em>,
+            a: ({node, ...props}) => (
+              <a {...props} className="rich-text-link" />
+            ),
           }}
         >
           {decodedContent}

@@ -75,7 +75,7 @@ export function DesignWorkPage() {
                 return (
                   <Link key={series.id} to={`/design-work/${series.url_slug}`}>
                     <Card className="group overflow-hidden border-0 shadow-sm hover:shadow-lg transition-all duration-300">
-                      <div className="aspect-[4/3] overflow-hidden">
+                      <div className="card-image-shell aspect-[4/3]">
                         <ImageWithFallback
                           src={series.image_url}
                           alt={series.title}
@@ -98,8 +98,8 @@ export function DesignWorkPage() {
                 const project = item as Project;
                 return (
                   <Link key={project.id} to={`/design-work/${project.url_slug}`}>
-                    <Card className="group overflow-hidden border-0 shadow-sm hover:shadow-lg transition-all duration-300">
-                      <div className="aspect-[4/3] overflow-hidden">
+                    <Card className="group overflow-hidden border-0 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+                      <div className="card-image-shell aspect-[16/10]">
                         <ImageWithFallback
                           src={project.heroImage}
                           alt={project.title}

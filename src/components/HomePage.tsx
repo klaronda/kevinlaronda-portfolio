@@ -132,14 +132,11 @@ export function HomePage() {
                 return (
                   <Link key={project.id} to={projectUrl}>
                     <Card className="group overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 bg-white">
-                      <div className="aspect-[4/3] overflow-hidden">
+                      <div className="card-image-shell aspect-[4/3]">
                         <ImageWithFallback
-                          src={project.heroImage}
+                          src={project.image_url}
                           alt={project.title}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 card-image"
-                          width={400}
-                          height={300}
-                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 card-image"
                         />
                       </div>
                       <div className="p-8">

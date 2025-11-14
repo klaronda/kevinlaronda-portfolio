@@ -463,9 +463,22 @@ html {
   text-decoration: underline;
 }
 
-.rich-text-content a {
-  color: #111;
-  text-decoration: underline;
+.rich-text-content a,
+.rich-text-content a:link,
+.rich-text-content a:visited {
+  color: #2563eb !important;
+  text-decoration: underline !important;
+  text-decoration-color: #2563eb !important;
+  text-underline-offset: 3px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  transition: color 0.2s ease !important;
+}
+
+.rich-text-content a:hover,
+.rich-text-content a:focus {
+  color: #1d4ed8 !important;
+  text-decoration-color: #1d4ed8 !important;
 }
 
 .rich-text-content img {
@@ -520,9 +533,19 @@ html {
 }
 
 /* Card images - darker stroke */
-.card-image {
+.card-image-shell {
+  position: relative;
+  overflow: hidden;
+  border-radius: inherit;
   border: 1px solid rgba(0, 0, 0, 0.15);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
+}
+
+.card-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .rich-text-content div[data-iframe-embed] iframe {
@@ -557,16 +580,24 @@ html {
 
 /* Additional aggressive link styling to override any conflicting styles */
 .tiptap-editor a,
-.rich-text-content a {
+.tiptap-editor a:link,
+.tiptap-editor a:visited,
+.rich-text-content a,
+.rich-text-content a:link,
+.rich-text-content a:visited {
   color: #2563eb !important;
   text-decoration: underline !important;
   text-decoration-color: #2563eb !important;
-  text-underline-offset: 2px !important;
+  text-underline-offset: 3px !important;
+  font-weight: 500 !important;
   cursor: pointer !important;
+  transition: color 0.2s ease !important;
 }
 
 .tiptap-editor a:hover,
-.rich-text-content a:hover {
+.tiptap-editor a:focus,
+.rich-text-content a:hover,
+.rich-text-content a:focus {
   color: #1d4ed8 !important;
   text-decoration-color: #1d4ed8 !important;
 }
@@ -620,13 +651,22 @@ html {
   border-radius: 0.5rem;
 }
 
-.ProseMirror a {
-  color: #2563eb;
-  text-decoration: underline;
+.ProseMirror a,
+.ProseMirror a:link,
+.ProseMirror a:visited {
+  color: #2563eb !important;
+  text-decoration: underline !important;
+  text-decoration-color: #2563eb !important;
+  text-underline-offset: 3px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  transition: color 0.2s ease !important;
 }
 
-.ProseMirror a:hover {
-  color: #1d4ed8;
+.ProseMirror a:hover,
+.ProseMirror a:focus {
+  color: #1d4ed8 !important;
+  text-decoration-color: #1d4ed8 !important;
 }
 
 .ProseMirror strong {
