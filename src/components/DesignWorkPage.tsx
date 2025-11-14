@@ -75,12 +75,13 @@ export function DesignWorkPage() {
                 return (
                   <Link key={series.id} to={`/design-work/${series.url_slug}`}>
                     <Card className="group overflow-hidden border-0 shadow-sm hover:shadow-lg transition-all duration-300">
-                      <div className="card-image-shell aspect-[4/3]">
+                      <div className="aspect-[4/3] overflow-hidden relative">
                         <ImageWithFallback
                           src={series.image_url}
                           alt={series.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 card-image"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 card-image card-image--no-border"
                         />
+                        <div className="card-image-overlay" aria-hidden="true" />
                       </div>
                       <div className="p-6">
                         <div className="flex items-center justify-between mb-3">
@@ -98,13 +99,14 @@ export function DesignWorkPage() {
                 const project = item as Project;
                 return (
                   <Link key={project.id} to={`/design-work/${project.url_slug}`}>
-                    <Card className="group overflow-hidden border-0 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-                      <div className="card-image-shell aspect-[16/10]">
+                    <Card className="group overflow-hidden border-0 shadow-sm hover:shadow-lg transition-all duration-300">
+                      <div className="aspect-[4/3] overflow-hidden relative">
                         <ImageWithFallback
                           src={project.heroImage}
                           alt={project.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 card-image"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 card-image card-image--no-border"
                         />
+                        <div className="card-image-overlay" aria-hidden="true" />
                       </div>
                       <div className="p-6">
                         <div className="flex items-center justify-between mb-3">

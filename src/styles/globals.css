@@ -294,21 +294,21 @@ html {
 .tiptap-editor .ProseMirror a,
 .tiptap-editor .ProseMirror a:link,
 .tiptap-editor .ProseMirror a:visited {
-  color: #2563eb !important;
+  color: #7b8faa !important;
   text-decoration: underline !important;
-  text-decoration-color: #2563eb !important;
-  text-underline-offset: 2px !important;
+  text-decoration-color: #7b8faa !important;
+  text-underline-offset: 3px !important;
   cursor: pointer !important;
 }
 
 .tiptap-editor .ProseMirror a:hover,
 .tiptap-editor .ProseMirror a:focus {
-  color: #1d4ed8 !important;
-  text-decoration-color: #1d4ed8 !important;
+  color: #54698e !important;
+  text-decoration-color: #54698e !important;
 }
 
-/* Normalize copy-pasted text in editor to match default styling */
-.tiptap-editor .ProseMirror * {
+/* Normalize copy-pasted text in editor to match default styling - exclude links */
+.tiptap-editor .ProseMirror *:not(a) {
   color: inherit !important;
   font-weight: inherit !important;
   font-size: inherit !important;
@@ -411,8 +411,8 @@ html {
   color: #6b7280 !important;
 }
 
-/* Normalize copy-pasted text to match default styling */
-.rich-text-content * {
+/* Normalize copy-pasted text to match default styling - exclude links */
+.rich-text-content *:not(a) {
   color: inherit !important;
   font-weight: inherit !important;
   font-size: inherit !important;
@@ -463,22 +463,11 @@ html {
   text-decoration: underline;
 }
 
-.rich-text-content a,
-.rich-text-content a:link,
-.rich-text-content a:visited {
-  color: #2563eb !important;
+.rich-text-content a {
+  color: #7b8faa !important;
   text-decoration: underline !important;
-  text-decoration-color: #2563eb !important;
+  text-decoration-color: #7b8faa !important;
   text-underline-offset: 3px !important;
-  font-weight: 500 !important;
-  cursor: pointer !important;
-  transition: color 0.2s ease !important;
-}
-
-.rich-text-content a:hover,
-.rich-text-content a:focus {
-  color: #1d4ed8 !important;
-  text-decoration-color: #1d4ed8 !important;
 }
 
 .rich-text-content img {
@@ -533,19 +522,23 @@ html {
 }
 
 /* Card images - darker stroke */
-.card-image-shell {
-  position: relative;
-  overflow: hidden;
-  border-radius: inherit;
-  border: 1px solid rgba(0, 0, 0, 0.15);
+.card-image {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
 }
 
-.card-image {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+.card-image-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0) 35%, rgba(5, 8, 16, 0.35) 90%);
+  mix-blend-mode: multiply;
+  opacity: 0.42;
+  transition: opacity 0.3s ease;
+}
+
+.group:hover .card-image-overlay {
+  opacity: 0.05;
 }
 
 .rich-text-content div[data-iframe-embed] iframe {
@@ -561,21 +554,20 @@ html {
   margin: 0.5rem 0 !important;
 }
 
-/* Force link styles for rendered content */
 .rich-text-content a,
 .rich-text-content a:link,
 .rich-text-content a:visited {
-  color: #2563eb !important;
+  color: #7b8faa !important;
   text-decoration: underline !important;
-  text-decoration-color: #2563eb !important;
-  text-underline-offset: 2px !important;
+  text-decoration-color: #7b8faa !important;
+  text-underline-offset: 3px !important;
   cursor: pointer !important;
 }
 
 .rich-text-content a:hover,
 .rich-text-content a:focus {
-  color: #1d4ed8 !important;
-  text-decoration-color: #1d4ed8 !important;
+  color: #54698e !important;
+  text-decoration-color: #54698e !important;
 }
 
 /* Additional aggressive link styling to override any conflicting styles */
@@ -585,21 +577,19 @@ html {
 .rich-text-content a,
 .rich-text-content a:link,
 .rich-text-content a:visited {
-  color: #2563eb !important;
+  color: #7b8faa !important;
   text-decoration: underline !important;
-  text-decoration-color: #2563eb !important;
+  text-decoration-color: #7b8faa !important;
   text-underline-offset: 3px !important;
-  font-weight: 500 !important;
   cursor: pointer !important;
-  transition: color 0.2s ease !important;
 }
 
 .tiptap-editor a:hover,
 .tiptap-editor a:focus,
 .rich-text-content a:hover,
 .rich-text-content a:focus {
-  color: #1d4ed8 !important;
-  text-decoration-color: #1d4ed8 !important;
+  color: #54698e !important;
+  text-decoration-color: #54698e !important;
 }
 
 .ProseMirror img {
@@ -654,19 +644,18 @@ html {
 .ProseMirror a,
 .ProseMirror a:link,
 .ProseMirror a:visited {
-  color: #2563eb !important;
+  color: #7b8faa !important;
   text-decoration: underline !important;
-  text-decoration-color: #2563eb !important;
+  text-decoration-color: #7b8faa !important;
   text-underline-offset: 3px !important;
   font-weight: 500 !important;
   cursor: pointer !important;
-  transition: color 0.2s ease !important;
 }
 
 .ProseMirror a:hover,
 .ProseMirror a:focus {
-  color: #1d4ed8 !important;
-  text-decoration-color: #1d4ed8 !important;
+  color: #54698e !important;
+  text-decoration-color: #54698e !important;
 }
 
 .ProseMirror strong {
@@ -734,4 +723,42 @@ html {
 
 .ProseMirror [style*="text-align: right"] {
   text-align: right;
+}
+
+/* FINAL OVERRIDE - Maximum specificity to ensure links stay soft-colored */
+div.rich-text-content a,
+div.rich-text-content a:link,
+div.rich-text-content a:visited,
+div.text-gray-500.rich-text-content a,
+div.text-gray-500.rich-text-content a:link,
+div.text-gray-500.rich-text-content a:visited,
+.text-gray-500.rich-text-content a,
+.text-gray-500.rich-text-content a:link,
+.text-gray-500.rich-text-content a:visited,
+.rich-text-content.text-gray-500 a,
+.rich-text-content.text-gray-500 a:link,
+.rich-text-content.text-gray-500 a:visited,
+.rich-text-content a,
+.rich-text-content a:link,
+.rich-text-content a:visited {
+  color: #7b8faa !important;
+  text-decoration: underline !important;
+  text-decoration-color: #7b8faa !important;
+  text-underline-offset: 3px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+}
+
+div.rich-text-content a:hover,
+div.rich-text-content a:focus,
+div.text-gray-500.rich-text-content a:hover,
+div.text-gray-500.rich-text-content a:focus,
+.text-gray-500.rich-text-content a:hover,
+.text-gray-500.rich-text-content a:focus,
+.rich-text-content.text-gray-500 a:hover,
+.rich-text-content.text-gray-500 a:focus,
+.rich-text-content a:hover,
+.rich-text-content a:focus {
+  color: #54698e !important;
+  text-decoration-color: #54698e !important;
 }
