@@ -51,7 +51,7 @@ async function setupProfile() {
     .from('profile')
     .insert({
       name: 'Kevin Laronda',
-      title: 'UX + Design Strategy + Manager',
+      title: 'UX Design + Product Strategy + AI',
       bio: `I'm a strategic problem-solver who turns messy, ambiguous challenges into clear, meaningful experiences. With roots in creative marketing and a background in skateboarding, I've learned to see unconventional paths and execute with precision.
 
 Over the years, I've evolved from creative director to UX strategist, developing a knack for identifying broken experiences and redesigning them into solutions customers love. I thrive in uncertainty, prefering projects others avoid, and I move fast—often arriving with prototypes instead of just problems.

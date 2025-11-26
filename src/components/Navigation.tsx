@@ -46,7 +46,7 @@ export function Navigation() {
                   <div className="text-xl text-white tracking-tight group-hover:text-gray-200 transition-colors">
                     Kevin Laronda
                   </div>
-                  <div className="text-xs text-gray-300 -mt-0.5">UX + Design Strategy + Manager</div>
+                  <div className="text-xs text-gray-300 -mt-0.5">UX Design + Product Strategy + AI</div>
                 </>
               )}
               

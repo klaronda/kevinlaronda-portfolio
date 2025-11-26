@@ -30,7 +30,7 @@ export function ResumePage() {
   // Use database data or fallback to hardcoded
   const currentProfile = profile?.[0] || { 
     name: 'Kevin Laronda', 
-    title: 'UX + Design Strategy + Manager', 
+    title: 'UX Design + Product Strategy + AI', 
     bio: '<p>I\'m a strategic problem-solver who turns messy, ambiguous challenges into clear, meaningful experiences. With roots in creative marketing and a background in skateboarding, I\'ve learned to see unconventional paths and execute with precision.</p><p>Over the years, I\'ve evolved from creative director to UX strategist, developing a knack for identifying broken experiences and redesigning them into solutions customers love. I thrive in uncertainty, prefering projects others avoid, and I move fast—often arriving with prototypes instead of just problems.</p><p>Whether leading teams or working hands-on, my focus stays the same: transforming frustration into satisfaction through thoughtful, high-impact design.</p>', 
     photo_url: 'https://ncefkmwkjyidchoprhth.supabase.co/storage/v1/object/public/site_images/resume/profile/1761162128216.jpeg' 
   };
