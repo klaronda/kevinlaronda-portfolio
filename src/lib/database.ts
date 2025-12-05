@@ -483,7 +483,7 @@ export const getProfile = async (): Promise<Profile[]> => {
 export const updateProfile = async (updates: Partial<Profile>): Promise<Profile | null> => {
   const { data, error } = await supabase
     .from('profile')
-    .update({ ...updates, updatedAt: new Date().toISOString() })
+    .update({ ...updates, updated_at: new Date().toISOString() })
     .select()
     .single()
 
