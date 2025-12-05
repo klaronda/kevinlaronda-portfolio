@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase, Project, Venture, Resume, Experience, Education, Profile, Series } from '../lib/supabase'
 import { 
   getProjects, 
@@ -480,11 +480,7 @@ export const useProfile = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    fetchProfile()
-  }, [])
-
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
@@ -495,7 +491,11 @@ export const useProfile = () => {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    fetchProfile()
+  }, [fetchProfile])
 
   const updateProfileData = async (updates: Partial<Profile>) => {
     try {

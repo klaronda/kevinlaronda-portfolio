@@ -29,7 +29,7 @@ const MONTHS = [
 ];
 
 export function ResumeAdmin() {
-  const { experience, education, profile, refetchExperience, refetchEducation, refetchProfile } = useSupabase();
+  const { experience, education, profile, refetchExperience, refetchEducation, refetchProfile, updateProfile } = useSupabase();
   
   // Experience state
   const [activeExperience, setActiveExperience] = useState<Experience | null>(experience[0] || null);
@@ -48,9 +48,9 @@ export function ResumeAdmin() {
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const profileFileRef = useRef<HTMLInputElement>(null);
 
-  // Initialize profile when data loads
+  // Initialize profile when data loads (only if activeProfile is not set)
   useEffect(() => {
-    if (profile.length > 0) {
+    if (profile.length > 0 && !activeProfile) {
       setActiveProfile(profile[0]);
     } else if (profile.length === 0 && !activeProfile) {
       // Create a default profile if none exists
@@ -65,12 +65,7 @@ export function ResumeAdmin() {
       };
       setActiveProfile(defaultProfile);
     }
-  }, [profile, activeProfile]);
-
-  // Refresh profile data on component mount
-  useEffect(() => {
-    refetchProfile();
-  }, [refetchProfile]);
+  }, [profile]); // Only run when profile changes, and only if activeProfile is not already set
 
   // New experience object
   const newExperience: Omit<Experience, 'id' | 'created_at' | 'updated_at'> = {
@@ -258,26 +253,25 @@ export function ResumeAdmin() {
 
     try {
       if (activeProfile.id && activeProfile.id !== '') {
-        // Update existing profile - prepare data for Supabase
-        const { created_at, updated_at, ...profileData } = activeProfile;
-        const { data, error } = await supabase
-          .from('profile')
-          .update({
-            name: profileData.name,
-            title: profileData.title,
-            bio: profileData.bio,
-            photo_url: profileData.photo_url,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', activeProfile.id)
-          .select()
-          .single();
+        // Update existing profile using the hook's updateProfile function
+        const { id, created_at, updated_at, createdAt, updatedAt, ...profileData } = activeProfile;
+        const updatedProfile = await updateProfile({
+          name: profileData.name,
+          title: profileData.title,
+          bio: profileData.bio,
+          photo_url: profileData.photo_url
+        });
 
-        if (error) throw error;
-        setActiveProfile(data);
+        if (updatedProfile) {
+          setActiveProfile(updatedProfile);
+          setIsEditingProfile(false);
+          alert('Profile saved successfully!');
+        } else {
+          throw new Error('Failed to update profile');
+        }
       } else {
         // Create new profile (remove the id field since it will be auto-generated)
-        const { id, created_at, updated_at, ...profileData } = activeProfile;
+        const { id, created_at, updated_at, createdAt, updatedAt, ...profileData } = activeProfile;
         const { data, error } = await supabase
           .from('profile')
           .insert([profileData])
@@ -286,15 +280,14 @@ export function ResumeAdmin() {
 
         if (error) throw error;
         setActiveProfile(data);
+        setIsEditingProfile(false);
+        // Only refetch for new profiles to sync the hook state
+        await refetchProfile();
+        alert('Profile saved successfully!');
       }
-
-      setIsEditingProfile(false);
-      // Refresh profile data
-      await refetchProfile();
-      alert('Profile saved successfully!');
     } catch (error) {
       console.error('Error saving profile:', error);
-      alert('Failed to save profile');
+      alert('Failed to save profile: ' + (error instanceof Error ? error.message : 'Unknown error'));
     }
   };
 
