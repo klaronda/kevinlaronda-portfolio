@@ -495,17 +495,33 @@ export const getProfile = async (): Promise<Profile[]> => {
 }
 
 export const updateProfile = async (updates: Partial<Profile>): Promise<Profile | null> => {
+  // Extract id from updates if present, otherwise we need to get the existing profile first
+  const { id, ...updateData } = updates
+  
+  if (!id) {
+    console.error('❌ updateProfile: No ID provided')
+    return null
+  }
+
+  console.log('🔄 Updating profile with ID:', id)
+  console.log('🔄 Update data:', updateData)
+  
   const { data, error } = await supabase
     .from('profile')
-    .update({ ...updates, updated_at: new Date().toISOString() })
+    .update({ ...updateData, updated_at: new Date().toISOString() })
+    .eq('id', id)
     .select()
     .single()
 
   if (error) {
-    console.error('Error updating profile:', error)
+    console.error('❌ Error updating profile:', error)
+    console.error('❌ Error code:', error.code)
+    console.error('❌ Error message:', error.message)
+    console.error('❌ Error details:', error.details)
     return null
   }
 
+  console.log('✅ Profile updated successfully:', data)
   return data
 }
 

@@ -261,7 +261,10 @@ export function ResumeAdmin() {
       if (activeProfile.id && activeProfile.id !== '') {
         // Update existing profile using the hook's updateProfile function
         const { id, created_at, updated_at, ...profileData } = activeProfile;
+        console.log('🔄 Saving profile with ID:', id);
+        console.log('🔄 Profile data to save:', profileData);
         const updatedProfile = await updateProfile({
+          id: id, // Include the ID so updateProfile knows which row to update
           name: profileData.name,
           title: profileData.title,
           bio: profileData.bio,
