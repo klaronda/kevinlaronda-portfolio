@@ -465,19 +465,33 @@ export const deleteEducation = async (id: string): Promise<boolean> => {
 
 // Profile
 export const getProfile = async (): Promise<Profile[]> => {
-  const { data, error } = await supabase
-    .from('profile')
-    .select('*')
-    .limit(1)
+  try {
+    const { data, error } = await supabase
+      .from('profile')
+      .select('*')
+      .limit(1)
 
-  if (error) {
-    console.error('Error fetching profile:', error)
-    console.error('Error details:', JSON.stringify(error, null, 2))
+    if (error) {
+      console.error('❌ Error fetching profile:', error)
+      console.error('Error code:', error.code)
+      console.error('Error message:', error.message)
+      console.error('Error details:', error.details)
+      console.error('Error hint:', error.hint)
+      return []
+    }
+
+    console.log('✅ Profile data fetched successfully:', data)
+    console.log('✅ Data type:', typeof data)
+    console.log('✅ Data length:', data?.length)
+    if (data && data.length > 0) {
+      console.log('✅ First profile item:', JSON.stringify(data[0], null, 2))
+    }
+    
+    return (data as Profile[]) || []
+  } catch (err) {
+    console.error('❌ Exception in getProfile:', err)
     return []
   }
-
-  console.log('Profile data fetched:', data)
-  return data || []
 }
 
 export const updateProfile = async (updates: Partial<Profile>): Promise<Profile | null> => {

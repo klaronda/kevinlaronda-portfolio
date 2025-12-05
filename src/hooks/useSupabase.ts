@@ -484,12 +484,19 @@ export const useProfile = () => {
     try {
       setLoading(true)
       setError(null)
+      console.log('🔄 Fetching profile...')
       const data = await getProfile()
-      setProfile(data)
+      console.log('📦 Profile data received in hook:', data)
+      console.log('📦 Profile data type:', Array.isArray(data) ? 'array' : typeof data)
+      console.log('📦 Profile data length:', data?.length)
+      setProfile(data || [])
+      console.log('✅ Profile state updated')
     } catch (err) {
+      console.error('❌ Error in fetchProfile:', err)
       setError(err instanceof Error ? err.message : 'Failed to fetch profile')
     } finally {
       setLoading(false)
+      console.log('🏁 Profile fetch complete, loading set to false')
     }
   }, [])
 

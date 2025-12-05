@@ -50,9 +50,15 @@ export function ResumeAdmin() {
 
   // Initialize profile when data loads (only if activeProfile is not set)
   useEffect(() => {
-    if (profile.length > 0 && !activeProfile) {
+    console.log('🔄 ResumeAdmin useEffect - profile:', profile)
+    console.log('🔄 ResumeAdmin useEffect - profile.length:', profile?.length)
+    console.log('🔄 ResumeAdmin useEffect - activeProfile:', activeProfile)
+    
+    if (profile && profile.length > 0) {
+      console.log('✅ Setting activeProfile from fetched data:', profile[0])
       setActiveProfile(profile[0]);
-    } else if (profile.length === 0 && !activeProfile) {
+    } else if ((!profile || profile.length === 0) && !activeProfile) {
+      console.log('⚠️ No profile data, creating default')
       // Create a default profile if none exists
       const defaultProfile: Profile = {
         id: '', // Will be auto-generated when saved
