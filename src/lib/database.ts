@@ -472,9 +472,11 @@ export const getProfile = async (): Promise<Profile[]> => {
 
   if (error) {
     console.error('Error fetching profile:', error)
+    console.error('Error details:', JSON.stringify(error, null, 2))
     return []
   }
 
+  console.log('Profile data fetched:', data)
   return data || []
 }
 

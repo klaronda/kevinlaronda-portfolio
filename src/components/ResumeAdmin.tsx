@@ -60,8 +60,8 @@ export function ResumeAdmin() {
         title: 'UX Design Strategist',
         bio: '',
         photo_url: '',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
       };
       setActiveProfile(defaultProfile);
     }
@@ -94,7 +94,7 @@ export function ResumeAdmin() {
   };
 
   // New profile object
-  const newProfile: Omit<Profile, 'id' | 'created_at' | 'updated_at'> = {
+  const newProfile: Omit<Profile, 'id' | 'createdAt' | 'updatedAt'> = {
     name: 'Kevin Laronda',
     title: 'UX Design Strategist',
     bio: '',
@@ -254,7 +254,7 @@ export function ResumeAdmin() {
     try {
       if (activeProfile.id && activeProfile.id !== '') {
         // Update existing profile using the hook's updateProfile function
-        const { id, created_at, updated_at, createdAt, updatedAt, ...profileData } = activeProfile;
+        const { id, createdAt, updatedAt, ...profileData } = activeProfile;
         const updatedProfile = await updateProfile({
           name: profileData.name,
           title: profileData.title,
@@ -271,7 +271,7 @@ export function ResumeAdmin() {
         }
       } else {
         // Create new profile (remove the id field since it will be auto-generated)
-        const { id, created_at, updated_at, createdAt, updatedAt, ...profileData } = activeProfile;
+        const { id, createdAt, updatedAt, ...profileData } = activeProfile;
         const { data, error } = await supabase
           .from('profile')
           .insert([profileData])
