@@ -40,17 +40,15 @@ export default async function handler(req: any, res: any) {
   const startTime = Date.now()
 
   try {
-    // Lightweight query to measure CMS latency
+    // Lightweight query to measure CMS latency (just check if table is accessible)
     const { data, error } = await supabase
       .from('projects')
-      .select('updated_at')
-      .order('updated_at', { ascending: false })
+      .select('id')
       .limit(1)
-      .single()
 
     const latency = Date.now() - startTime
 
-    if (error && error.code !== 'PGRST116') {
+    if (error) {
       const response: CMSHealthResponse = {
         status: 'error',
         provider: 'supabase',
@@ -65,7 +63,7 @@ export default async function handler(req: any, res: any) {
       status: 'ok',
       provider: 'supabase',
       latency_ms: latency,
-      last_publish_check: data?.updated_at || new Date().toISOString()
+      last_publish_check: new Date().toISOString()
     }
 
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate')
