@@ -5,6 +5,26 @@
       "destination": "/api/sitemap.xml"
     },
     {
+      "source": "/api/health",
+      "destination": "/api/health"
+    },
+    {
+      "source": "/api/health/cms",
+      "destination": "/api/health/cms"
+    },
+    {
+      "source": "/api/health/form-test",
+      "destination": "/api/health/form-test"
+    },
+    {
+      "source": "/api/health/log",
+      "destination": "/api/health/log"
+    },
+    {
+      "source": "/api/health/deploy",
+      "destination": "/api/health/deploy"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
@@ -38,6 +58,32 @@
         {
           "key": "Content-Type",
           "value": "text/plain"
+        }
+      ]
+    },
+    {
+      "source": "/api/health/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        },
+        {
+          "key": "Content-Type",
+          "value": "application/json"
+        }
+      ]
+    },
+    {
+      "source": "/api/health",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        },
+        {
+          "key": "Content-Type",
+          "value": "application/json"
         }
       ]
     }
