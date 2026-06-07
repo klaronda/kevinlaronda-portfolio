@@ -1,5 +1,12 @@
 import { createClient } from '@supabase/supabase-js'
 
+const DESIGN_WORK_BADGES = ['UX Design', 'UX Strategy', 'Manager'] as const
+
+function formatLastmod(value: string | null | undefined, fallback: string): string {
+  if (!value) return fallback
+  return new Date(value).toISOString().split('T')[0]
+}
+
 export default async function handler(req: any, res: any) {
   const supabaseUrl = process.env.VITE_SUPABASE_URL
   const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY
@@ -13,29 +20,31 @@ export default async function handler(req: any, res: any) {
   const currentDate = new Date().toISOString().split('T')[0]
 
   try {
-    // Fetch visible projects
-    const { data: projects, error: projectsError } = await supabase
-      .from('projects')
-      .select('url_slug, updated_at')
-      .eq('is_visible', true)
-      .order('sort_order', { ascending: true })
+    const [projectsResult, seriesResult] = await Promise.all([
+      supabase
+        .from('projects')
+        .select('url_slug, updatedAt, badgeType')
+        .eq('is_visible', true)
+        .neq('url_slug', '')
+        .order('sort_order', { ascending: true }),
+      supabase
+        .from('series')
+        .select('url_slug, updated_at, badge_type')
+        .eq('is_visible', true)
+        .neq('url_slug', '')
+        .order('sort_order', { ascending: true }),
+    ])
 
-    if (projectsError) {
-      console.error('Error fetching projects:', projectsError)
+    if (projectsResult.error) {
+      console.error('Error fetching projects:', projectsResult.error)
+      return res.status(500).json({ error: 'Error fetching projects' })
     }
 
-    // Fetch visible ventures
-    const { data: ventures, error: venturesError } = await supabase
-      .from('ventures')
-      .select('url_slug, updated_at')
-      .eq('is_visible', true)
-      .order('sort_order', { ascending: true })
-
-    if (venturesError) {
-      console.error('Error fetching ventures:', venturesError)
+    if (seriesResult.error) {
+      console.error('Error fetching series:', seriesResult.error)
+      return res.status(500).json({ error: 'Error fetching series' })
     }
 
-    // Static pages
     const staticPages = [
       { url: '/', priority: '1.0', changefreq: 'weekly' },
       { url: '/resume', priority: '0.9', changefreq: 'monthly' },
@@ -43,22 +52,55 @@ export default async function handler(req: any, res: any) {
       { url: '/ventures', priority: '0.8', changefreq: 'monthly' },
     ]
 
-    // Build sitemap XML
-    const projectPages = (projects || []).map((project: any) => ({
-      url: `/design-work/${project.url_slug}`,
-      priority: '0.8',
-      changefreq: 'monthly',
-      lastmod: project.updated_at ? new Date(project.updated_at).toISOString().split('T')[0] : currentDate
-    }))
+    const designWorkProjectPages = (projectsResult.data || [])
+      .filter((project) => DESIGN_WORK_BADGES.includes(project.badgeType))
+      .map((project) => ({
+        url: `/design-work/${project.url_slug}`,
+        priority: '0.8',
+        changefreq: 'monthly',
+        lastmod: formatLastmod(project.updatedAt, currentDate),
+      }))
 
-    const venturePages = (ventures || []).map((venture: any) => ({
-      url: `/ventures/${venture.url_slug}`,
-      priority: '0.7',
-      changefreq: 'monthly',
-      lastmod: venture.updated_at ? new Date(venture.updated_at).toISOString().split('T')[0] : currentDate
-    }))
+    const ventureProjectPages = (projectsResult.data || [])
+      .filter((project) => project.badgeType === 'Ventures')
+      .map((project) => ({
+        url: `/ventures/${project.url_slug}`,
+        priority: '0.7',
+        changefreq: 'monthly',
+        lastmod: formatLastmod(project.updatedAt, currentDate),
+      }))
 
-    const allPages = [...staticPages, ...projectPages, ...venturePages]
+    const designWorkSeriesPages = (seriesResult.data || [])
+      .filter((series) => series.badge_type === 'Design Work')
+      .map((series) => ({
+        url: `/design-work/${series.url_slug}`,
+        priority: '0.8',
+        changefreq: 'monthly',
+        lastmod: formatLastmod(series.updated_at, currentDate),
+      }))
+
+    const ventureSeriesPages = (seriesResult.data || [])
+      .filter((series) => series.badge_type === 'Ventures')
+      .map((series) => ({
+        url: `/ventures/${series.url_slug}`,
+        priority: '0.7',
+        changefreq: 'monthly',
+        lastmod: formatLastmod(series.updated_at, currentDate),
+      }))
+
+    const seenUrls = new Set<string>()
+    const dynamicPages = [
+      ...designWorkSeriesPages,
+      ...designWorkProjectPages,
+      ...ventureSeriesPages,
+      ...ventureProjectPages,
+    ].filter((page) => {
+      if (seenUrls.has(page.url)) return false
+      seenUrls.add(page.url)
+      return true
+    })
+
+    const allPages = [...staticPages, ...dynamicPages]
 
     const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
